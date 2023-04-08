@@ -250,24 +250,28 @@
               const videoId = currentVideoDeviceId.value
               const audioId = currentAudioDeviceId.value
 
-              let vConfig = videoConfig.value
+              let vConfig = false
 
-              if (!vConfig || vConfig.deviceId !== videoId) {
-                const vDevice = videoDeviceList.value.find(i => {
-                  return i.deviceId === videoId
-                })
-                console.log(vDevice)
+              if (videoId) {
+                if (!videoConfig.value || videoConfig.value.deviceId !== videoId) {
+                  const vDevice = videoDeviceList.value.find(i => {
+                    return i.deviceId === videoId
+                  })
+                  console.log(vDevice)
 
-                if (vDevice) {
-                  const conf = vDevice.getCapabilities()
-                  vConfig = videoConfig.value = {
-                    deviceId: conf.deviceId,
-                    height: conf.height.max,
-                    width: conf.width.max,
-                    frameRate: conf.frameRate.max
+                  if (vDevice) {
+                    const conf = vDevice.getCapabilities()
+                    vConfig = videoConfig.value = {
+                      deviceId: conf.deviceId,
+                      height: conf.height.max,
+                      width: conf.width.max,
+                      frameRate: conf.frameRate.max
+                    }
+                  } else {
+                    vConfig = { deviceId: videoId }
                   }
                 } else {
-                  vConfig = { deviceId: videoId }
+                  vConfig = videoConfig.value
                 }
               }
 
