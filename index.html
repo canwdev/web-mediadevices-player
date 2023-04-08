@@ -169,13 +169,26 @@
         return val
       }
 
+      const useLocalStorageObject = (key, defaultValue = {}) => {
+        const val = ref(JSON.parse(localStorage.getItem(key) || 'null') || defaultValue)
+        watch(val, (val) => {
+          if (val) {
+            localStorage.setItem(key, JSON.stringify(val))
+          } else {
+            localStorage.removeItem(key)
+          }
+        })
+        return val
+      }
+
       createApp({
         setup() {
           const isLoading = ref(true)
           const deviceList = ref([])
           const videoRef = ref()
-          const currentVideoDeviceId = useLocalStorageString('ls_key_VideoDeviceId', '')
-          const currentAudioDeviceId = useLocalStorageString('ls_key_AudioDeviceId', '')
+          const currentVideoDeviceId = useLocalStorageString('ls_key_video_device_id', '')
+          const videoConfig = useLocalStorageObject('ls_key_video_config')
+          const currentAudioDeviceId = useLocalStorageString('ls_key_audio_device_id', '')
           const mediaStreamRef = shallowRef()
 
           const filterDeviceList = (list, kind) => {
@@ -237,13 +250,30 @@
               const videoId = currentVideoDeviceId.value
               const audioId = currentAudioDeviceId.value
 
-              // if (audioId && !videoId) {
+              let vConfig = videoConfig.value
 
-              //   let audio = new Audio();
-              //   audio.srcObject = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: audioId }, video: false });
-              //   audio.play();
-              //   return
-              // }
+              if (!vConfig || vConfig.deviceId !== videoId) {
+                const vDevice = videoDeviceList.value.find(i => {
+                  return i.deviceId === videoId
+                })
+                console.log(vDevice)
+
+                if (vDevice) {
+                  const conf = vDevice.getCapabilities()
+                  vConfig = videoConfig.value = {
+                    deviceId: conf.deviceId,
+                    height: conf.height.max,
+                    width: conf.width.max,
+                    frameRate: conf.frameRate.max
+                  }
+                } else {
+                  vConfig = { deviceId: videoId }
+                }
+              }
+
+              // console.log('vConfig', vConfig)
+
+
 
               var constraints = {
                 // audio: true,
@@ -259,12 +289,13 @@
                 //   sampleSize: 16,
                 //   volume: 1
                 // },
-                video: videoId ? {
-                  deviceId: videoId,
-                  width: { min: 1024, ideal: 1280, max: 1920 },
-                  height: { min: 576, ideal: 720, max: 1080 },
-                  frameRate: { ideal: 30, max: 60 }
-                } : false,
+                // video: {
+                //   deviceId: videoId,
+                //   width: { min: 1280, ideal: 1920, max: 2560 },
+                //   height: { min: 720, ideal: 1080, max: 1440 },
+                //   frameRate: { ideal: 30, max: 60 }
+                // },
+                video: vConfig
               };
 
               const stream = await navigator.mediaDevices.getUserMedia(constraints)
@@ -309,8 +340,9 @@
 
           const clearSelect = () => {
             stopBothVideoAndAudio()
-            currentVideoDeviceId.value = null
-            currentAudioDeviceId.value = null
+            currentVideoDeviceId.value = ''
+            currentAudioDeviceId.value = ''
+            videoConfig.value = null
           }
 
           return {
@@ -332,9 +364,6 @@
 
   </script>
 
-
-  <script>
-  </script>
 </body>
 
 </html>
