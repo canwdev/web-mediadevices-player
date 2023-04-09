@@ -239,29 +239,39 @@ export default defineComponent({
   </div>
   <div class="action-bar-wrap">
 
-    <div class="action-bar" :class="{visible: (!currentVideoDeviceId && !currentAudioDeviceId)}">
+    <div class="action-bar" :class="{ visible: (!currentVideoDeviceId && !currentAudioDeviceId) }">
+      <div>
 
-      <label for="videoSelect">
-        <span>Video:</span>
-        <select title="Video" id="videoSelect" v-model="currentVideoDeviceId">
-          <option v-for="(item) in videoDeviceList" :key="item.deviceId" :value="item.deviceId">{{ item.label }}
-          </option>
-        </select>
-      </label>
+        <label for="videoSelect">
+          <span>Video:</span>
+          <select title="Video" id="videoSelect" v-model="currentVideoDeviceId">
+            <option v-for="(item) in videoDeviceList" :key="item.deviceId" :value="item.deviceId">{{ item.label }}
+            </option>
+          </select>
+        </label>
 
-      <label for="audioSelect">
-        <span>Audio:</span>
-        <select name="Audio" id="audioSelect" v-model="currentAudioDeviceId">
-          <option v-for="(item) in audioDeviceList" :key="item.deviceId" :value="item.deviceId">{{ item.label }}
-          </option>
-        </select>
-      </label>
+        <label for="audioSelect">
+          <span>Audio:</span>
+          <select name="Audio" id="audioSelect" v-model="currentAudioDeviceId">
+            <option v-for="(item) in audioDeviceList" :key="item.deviceId" :value="item.deviceId">{{ item.label }}
+            </option>
+          </select>
+        </label>
 
-      <button @click="handleStart">Start</button>
-      <button @click="stopBothVideoAndAudio">Stop</button>
-      <button @click="clearSelect">Reset</button>
-      <button @click="toggleFullScreen">FullScreen</button>
-      <input type="checkbox" v-model="isShowControls" title="Show Controls">
+        <button @click="handleStart">Start</button>
+        <button @click="stopBothVideoAndAudio">Stop</button>
+        <button @click="clearSelect">Reset</button>
+        <button @click="toggleFullScreen">FullScreen</button>
+
+        <label for="toggleControls">
+          <input id="toggleControls" type="checkbox" v-model="isShowControls" title="Show Controls">
+          <span>Controls</span>
+        </label>
+      </div>
+
+      <div>
+        <a href="https://github.com/canwdev/web-mediadevices-player" target="_blank">Github</a>
+      </div>
     </div>
 
   </div>
@@ -275,6 +285,7 @@ export default defineComponent({
   right: 0;
   z-index: 10;
   height: 70px;
+  user-select: none;
 }
 
 .action-bar.visible,
@@ -291,21 +302,26 @@ export default defineComponent({
   visibility: hidden;
   opacity: 0;
   transition: all .3s;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
-.action-bar span {
+.action-bar span, a {
+  color: white;
   font-size: 12px;
 }
 
 .action-bar select {
-  width: 200px;
+  width: 150px;
   margin-left: 5px;
   margin-right: 8px;
 }
 
 .action-bar button {
-  margin-left: 2px;
-  margin-right: 2px;
+  margin-left: 3px;
+  margin-right: 3px;
 }
 
 video {
