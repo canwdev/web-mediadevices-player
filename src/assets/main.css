@@ -1,0 +1,6 @@
+@import './base.css';
+
+#app {
+  position: relative;
+  overflow: hidden;
+}
