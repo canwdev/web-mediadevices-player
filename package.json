@@ -1,6 +1,6 @@
 {
-  "name": "vue-project",
-  "version": "0.0.0",
+  "name": "web-mediadevices-player",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "eslint": "^8.34.0",
     "eslint-plugin-vue": "^9.9.0",
     "prettier": "^2.8.4",
-    "vite": "^4.1.4"
+    "vite": "^4.1.4",
+    "vite-plugin-pwa": "^0.14.7"
   }
 }
