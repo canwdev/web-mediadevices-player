@@ -11,3 +11,11 @@ body {
   background-color: #000000;
   color: white;
 }
+
+.font-code {
+  font-family: 'Operator Mono', 'Source Code Pro', Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.font-emoji, .font-emoji * {
+  font-family: "Segoe UI Emoji", "SF Pro SC", "SF Pro Text", "SF Pro Icons", "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+}

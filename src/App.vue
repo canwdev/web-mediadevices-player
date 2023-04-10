@@ -1,6 +1,7 @@
 <script>
 import { defineComponent, onMounted, ref, computed, shallowRef } from 'vue'
 import { useLocalStorageBoolean, useLocalStorageString, useLocalStorageObject } from './hooks/use-local-storage'
+import {snapVideoImageDownload} from './utils/index'
 
 async function getEnumerateDevices() {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -17,23 +18,10 @@ async function getEnumerateDevices() {
   }
 }
 
-// async function startDisplayCapture(displayMediaOptions) {
-//   let captureStream;
-
-//   try {
-//     captureStream = await navigator.mediaDevices.getDisplayMedia(
-//       displayMediaOptions
-//     );
-//   } catch (err) {
-//     console.error(`Error: ${err}`);
-//   }
-//   return captureStream;
-// }
-
 
 export default defineComponent({
   setup() {
-    const isLoading = ref(true)
+    const isLoading = ref(false)
     const isShowControls = useLocalStorageBoolean('ls_key_is_show_controls', true)
     const deviceList = ref([])
     const videoRef = ref()
@@ -67,32 +55,39 @@ export default defineComponent({
       }
     }
 
+    const listenDeviceChange = () => {
+      navigator.mediaDevices.ondevicechange = async () => {
+        // console.log('ondevicechange', event)
+        await updateDeviceList()
+      };
+    }
+
     onMounted(async () => {
       try {
         if (currentVideoDeviceId.value || currentAudioDeviceId.value) {
           await startMediaStream()
           await updateDeviceList()
-
-          navigator.mediaDevices.ondevicechange = async () => {
-            // console.log('ondevicechange', event)
-            await updateDeviceList()
-          };
+          listenDeviceChange()
           return
         }
 
-        mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: true,
-        })
+        // catch error if this type of input device is not connected
+        try {
+          mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({ audio: true })
+          stopBothVideoAndAudio()
+        } catch (e) {
+          console.warn('getUserMedia audio Error:', e)
+        }
+        try {
+          mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({ video: true })
+          stopBothVideoAndAudio()
+        } catch (e) {
+          console.warn('getUserMedia video Error:', e)
+        }
 
-        stopBothVideoAndAudio()
         await updateDeviceList()
 
-        navigator.mediaDevices.ondevicechange = async () => {
-          // console.log('ondevicechange', event)
-          await updateDeviceList()
-        };
-
+        listenDeviceChange()
       } catch (e) {
         console.error(e)
         alert('Error: ' + e.message)
@@ -215,6 +210,36 @@ export default defineComponent({
       }
     }
 
+    // https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen_Capture
+    const handleStartCaptureScreen = async () => {
+      try {
+        isLoading.value = true
+        stopBothVideoAndAudio()
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            displaySurface: "window",
+          },
+          audio: true,
+        });
+        mediaStreamRef.value = stream
+        // console.log('stream', stream)
+        const video = videoRef.value
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          video.play();
+        };
+      } catch (e) {
+        console.error(e)
+        alert('Error: ' + e.message)
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    const handleScreenshot = () => {
+      snapVideoImageDownload(videoRef.value)
+    }
+
     return {
       videoRef,
       deviceList,
@@ -228,6 +253,8 @@ export default defineComponent({
       isLoading,
       isShowControls,
       toggleFullScreen,
+      handleStartCaptureScreen,
+      handleScreenshot
     }
   }
 })
@@ -239,7 +266,7 @@ export default defineComponent({
   </div>
   <div class="action-bar-wrap">
 
-    <div class="action-bar" :class="{ visible: (!currentVideoDeviceId && !currentAudioDeviceId) }">
+    <div class="action-bar font-emoji" :class="{ visible: (!currentVideoDeviceId && !currentAudioDeviceId) }">
       <div>
 
         <label for="videoSelect">
@@ -258,19 +285,22 @@ export default defineComponent({
           </select>
         </label>
 
-        <button @click="handleStart">Start</button>
-        <button @click="stopBothVideoAndAudio">Stop</button>
-        <button @click="clearSelect">Reset</button>
-        <button @click="toggleFullScreen">FullScreen</button>
-
+        <button @click="handleStart">▶Start</button>
+        <button @click="stopBothVideoAndAudio">⏹Stop</button>
+        <button @click="clearSelect">🛑Reset</button>
+        <button @click="toggleFullScreen">📺Full Screen</button>
+        
         <label for="toggleControls">
           <input id="toggleControls" type="checkbox" v-model="isShowControls" title="Show Controls">
           <span>Controls</span>
         </label>
+
+        <button @click="handleStartCaptureScreen">⏺Screen Capture</button>
+        <button @click="handleScreenshot">📷Screenshot</button>
       </div>
 
       <div>
-        <a href="https://github.com/canwdev/web-mediadevices-player" target="_blank">Github</a>
+        <a href="https://github.com/canwdev/web-mediadevices-player" target="_blank">🔗Github</a>
       </div>
     </div>
 
@@ -308,7 +338,8 @@ export default defineComponent({
   justify-content: space-between;
 }
 
-.action-bar span, a {
+.action-bar span,
+a {
   color: white;
   font-size: 12px;
 }
