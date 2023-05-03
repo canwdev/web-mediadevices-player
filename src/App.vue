@@ -347,7 +347,7 @@ export default defineComponent({
   height: 100%;
   padding: 10px;
 
-  background: linear-gradient(180deg, #0000004d, transparent);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.53), transparent);
   visibility: hidden;
   opacity: 0;
   transition: all .3s;
@@ -368,10 +368,27 @@ a {
   margin-left: 5px;
   margin-right: 8px;
 }
+.action-bar select option{
+  background: white;
+  color: black;
+}
 
-.action-bar button {
+.action-bar button,
+.action-bar select {
   margin-left: 3px;
   margin-right: 3px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  transition: all .3s;
+}
+.action-bar button:hover,
+.action-bar select:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transition: none;
 }
 
 video {
