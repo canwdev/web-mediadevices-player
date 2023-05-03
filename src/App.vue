@@ -1,7 +1,7 @@
 <script>
-import { defineComponent, onMounted, ref, computed, shallowRef } from 'vue'
-import { useLocalStorageBoolean, useLocalStorageString, useLocalStorageObject } from './hooks/use-local-storage'
-import {snapVideoImageDownload} from './utils/index'
+import {defineComponent, onMounted, ref, computed, shallowRef, onBeforeUnmount} from 'vue'
+import {useLocalStorageBoolean, useLocalStorageString, useLocalStorageObject} from './hooks/use-local-storage'
+import {CursorHider, snapVideoImageDownload} from './utils/index'
 
 async function getEnumerateDevices() {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -22,7 +22,7 @@ async function getEnumerateDevices() {
 export default defineComponent({
   setup() {
     const isLoading = ref(false)
-    const isShowControls = useLocalStorageBoolean('ls_key_is_show_controls', true)
+    const isShowControls = useLocalStorageBoolean('ls_key_is_show_controls', false)
     const deviceList = ref([])
     const videoRef = ref()
     const currentVideoDeviceId = useLocalStorageString('ls_key_video_device_id', '')
@@ -62,7 +62,21 @@ export default defineComponent({
       };
     }
 
+    const mouseHider = shallowRef()
+    const actionBarRef = shallowRef()
+
     onMounted(async () => {
+      mouseHider.value = new CursorHider('#app', ({el, isShow}) => {
+        const actionBarEl = actionBarRef.value
+        if (!isShow) {
+          el.style.cursor = 'none';
+          actionBarEl.classList.remove('visible')
+        } else {
+          el.style.cursor = '';
+          actionBarEl.classList.add('visible')
+        }
+      }, 3000)
+
       try {
         if (currentVideoDeviceId.value || currentAudioDeviceId.value) {
           await startMediaStream()
@@ -73,13 +87,13 @@ export default defineComponent({
 
         // catch error if this type of input device is not connected
         try {
-          mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({ audio: true })
+          mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({audio: true})
           stopBothVideoAndAudio()
         } catch (e) {
           console.warn('getUserMedia audio Error:', e)
         }
         try {
-          mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({ video: true })
+          mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({video: true})
           stopBothVideoAndAudio()
         } catch (e) {
           console.warn('getUserMedia video Error:', e)
@@ -91,6 +105,12 @@ export default defineComponent({
       } catch (e) {
         console.error(e)
         alert('Error: ' + e.message)
+      }
+    })
+
+    onBeforeUnmount(() => {
+      if (mouseHider.value) {
+        mouseHider.value.stop()
       }
     })
 
@@ -121,7 +141,7 @@ export default defineComponent({
                 frameRate: conf.frameRate.max
               }
             } else {
-              vConfig = { deviceId: videoId }
+              vConfig = {deviceId: videoId}
             }
           } else {
             vConfig = videoConfig.value
@@ -129,7 +149,6 @@ export default defineComponent({
         }
 
         // console.log('vConfig', vConfig)
-
 
 
         var constraints = {
@@ -254,7 +273,8 @@ export default defineComponent({
       isShowControls,
       toggleFullScreen,
       handleStartCaptureScreen,
-      handleScreenshot
+      handleScreenshot,
+      actionBarRef,
     }
   }
 })
@@ -266,7 +286,7 @@ export default defineComponent({
   </div>
   <div class="action-bar-wrap">
 
-    <div class="action-bar font-emoji" :class="{ visible: (!currentVideoDeviceId && !currentAudioDeviceId) }">
+    <div ref="actionBarRef" class="action-bar font-emoji" :class="{ visible: (!currentVideoDeviceId && !currentAudioDeviceId) }">
       <div>
 
         <label for="videoSelect">
@@ -289,7 +309,7 @@ export default defineComponent({
         <button @click="stopBothVideoAndAudio">⏹Stop</button>
         <button @click="clearSelect">🛑Reset</button>
         <button @click="toggleFullScreen">📺Full Screen</button>
-        
+
         <label for="toggleControls">
           <input id="toggleControls" type="checkbox" v-model="isShowControls" title="Show Controls">
           <span>Controls</span>
@@ -318,8 +338,7 @@ export default defineComponent({
   user-select: none;
 }
 
-.action-bar.visible,
-.action-bar-wrap:hover .action-bar {
+.action-bar.visible {
   visibility: visible;
   opacity: 1;
 }
