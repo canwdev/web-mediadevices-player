@@ -1,6 +1,10 @@
 <script>
 import {defineComponent, onMounted, ref, computed, shallowRef, onBeforeUnmount} from 'vue'
-import {useLocalStorageBoolean, useLocalStorageString, useLocalStorageObject} from './hooks/use-local-storage'
+import {
+  useLocalStorageBoolean,
+  useLocalStorageString,
+  useLocalStorageObject,
+} from '@/hooks/use-local-storage'
 import {CursorHider, snapVideoImageDownload} from './utils/index'
 
 async function getEnumerateDevices() {
@@ -18,7 +22,6 @@ async function getEnumerateDevices() {
   }
 }
 
-
 export default defineComponent({
   setup() {
     const isLoading = ref(false)
@@ -32,7 +35,7 @@ export default defineComponent({
     const mediaStreamRef = shallowRef()
 
     const filterDeviceList = (list, kind) => {
-      return list.filter(item => item.kind === kind && !!item.deviceId)
+      return list.filter((item) => item.kind === kind && !!item.deviceId)
     }
 
     const videoDeviceList = computed(() => {
@@ -41,7 +44,6 @@ export default defineComponent({
     const audioDeviceList = computed(() => {
       return filterDeviceList(deviceList.value, 'audioinput')
     })
-
 
     const updateDeviceList = async () => {
       try {
@@ -59,23 +61,27 @@ export default defineComponent({
       navigator.mediaDevices.ondevicechange = async () => {
         // console.log('ondevicechange', event)
         await updateDeviceList()
-      };
+      }
     }
 
     const mouseHider = shallowRef()
     const actionBarRef = shallowRef()
 
     onMounted(async () => {
-      mouseHider.value = new CursorHider('#app', ({el, isShow}) => {
-        const actionBarEl = actionBarRef.value
-        if (!isShow) {
-          el.style.cursor = 'none';
-          actionBarEl.classList.remove('visible')
-        } else {
-          el.style.cursor = '';
-          actionBarEl.classList.add('visible')
-        }
-      }, 3000)
+      mouseHider.value = new CursorHider(
+        '#app',
+        ({el, isShow}) => {
+          const actionBarEl = actionBarRef.value
+          if (!isShow) {
+            el.style.cursor = 'none'
+            actionBarEl.classList.remove('visible')
+          } else {
+            el.style.cursor = ''
+            actionBarEl.classList.add('visible')
+          }
+        },
+        3000
+      )
 
       try {
         if (currentVideoDeviceId.value || currentAudioDeviceId.value) {
@@ -112,8 +118,8 @@ export default defineComponent({
       if (mouseHider.value) {
         mouseHider.value.stop()
       }
+      stopBothVideoAndAudio()
     })
-
 
     // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
     const startMediaStream = async () => {
@@ -127,7 +133,7 @@ export default defineComponent({
 
         if (videoId) {
           if (!videoConfig.value || videoConfig.value.deviceId !== videoId) {
-            const vDevice = videoDeviceList.value.find(i => {
+            const vDevice = videoDeviceList.value.find((i) => {
               return i.deviceId === videoId
             })
             console.log(vDevice)
@@ -138,7 +144,7 @@ export default defineComponent({
                 deviceId: conf.deviceId,
                 height: conf.height.max,
                 width: conf.width.max,
-                frameRate: conf.frameRate.max
+                frameRate: conf.frameRate.max,
               }
             } else {
               vConfig = {deviceId: videoId}
@@ -150,15 +156,16 @@ export default defineComponent({
 
         // console.log('vConfig', vConfig)
 
-
         var constraints = {
           // audio: true,
-          audio: audioId ? {
-            deviceId: audioId,
-            autoGainControl: false,
-            echoCancellation: false,
-            noiseSuppression: false
-          } : false,
+          audio: audioId
+            ? {
+              deviceId: audioId,
+              autoGainControl: false,
+              echoCancellation: false,
+              noiseSuppression: false,
+            }
+            : false,
           // audio: {
           //   channelCount: 1,
           //   sampleRate: 16000,
@@ -171,17 +178,17 @@ export default defineComponent({
           //   height: { min: 720, ideal: 1080, max: 1440 },
           //   frameRate: { ideal: 30, max: 60 }
           // },
-          video: vConfig
-        };
+          video: vConfig,
+        }
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints)
         mediaStreamRef.value = stream
         // console.log('stream', stream)
         const video = videoRef.value
-        video.srcObject = stream;
+        video.srcObject = stream
         video.onloadedmetadata = () => {
-          video.play();
-        };
+          video.play()
+        }
       } catch (e) {
         console.error(e)
         alert('Error: ' + e.message)
@@ -196,7 +203,6 @@ export default defineComponent({
     }
 
     const stopBothVideoAndAudio = () => {
-
       const video = videoRef.value
       video.pause()
       video.srcObject = null
@@ -206,12 +212,11 @@ export default defineComponent({
       }
       const tracks = stream.getTracks()
       // console.log(tracks)
-      tracks.forEach(track => {
+      tracks.forEach((track) => {
         if (track.readyState == 'live') {
-          track.stop();
+          track.stop()
         }
       })
-
     }
 
     const clearSelect = () => {
@@ -223,9 +228,9 @@ export default defineComponent({
 
     function toggleFullScreen() {
       if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
+        document.documentElement.requestFullscreen()
       } else if (document.exitFullscreen) {
-        document.exitFullscreen();
+        document.exitFullscreen()
       }
     }
 
@@ -236,17 +241,17 @@ export default defineComponent({
         stopBothVideoAndAudio()
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            displaySurface: "window",
+            displaySurface: 'window',
           },
           audio: true,
-        });
+        })
         mediaStreamRef.value = stream
         // console.log('stream', stream)
         const video = videoRef.value
-        video.srcObject = stream;
+        video.srcObject = stream
         video.onloadedmetadata = () => {
-          video.play();
-        };
+          video.play()
+        }
       } catch (e) {
         console.error(e)
         alert('Error: ' + e.message)
@@ -276,147 +281,168 @@ export default defineComponent({
       handleScreenshot,
       actionBarRef,
     }
-  }
+  },
 })
 </script>
 
 <template>
-  <div class="loading-layer" :class="{ visible: isLoading }">
-    Loading...
-  </div>
-  <div class="action-bar-wrap">
+  <div class="web-mediadevices-player">
+    <div class="loading-layer" :class="{visible: isLoading}">Loading...</div>
+    <div class="action-bar-wrap">
+      <div
+        ref="actionBarRef"
+        class="action-bar font-emoji"
+        :class="{visible: !currentVideoDeviceId && !currentAudioDeviceId}"
+      >
+        <div class="action-bar-side">
+          <label for="videoSelect">
+            <span>Video:</span>
+            <select title="Video" id="videoSelect" v-model="currentVideoDeviceId">
+              <option v-for="item in videoDeviceList" :key="item.deviceId" :value="item.deviceId">
+                {{ item.label }}
+              </option>
+            </select>
+          </label>
 
-    <div ref="actionBarRef" class="action-bar font-emoji" :class="{ visible: (!currentVideoDeviceId && !currentAudioDeviceId) }">
-      <div>
+          <label for="audioSelect">
+            <span>Audio:</span>
+            <select name="Audio" id="audioSelect" v-model="currentAudioDeviceId">
+              <option v-for="item in audioDeviceList" :key="item.deviceId" :value="item.deviceId">
+                {{ item.label }}
+              </option>
+            </select>
+          </label>
 
-        <label for="videoSelect">
-          <span>Video:</span>
-          <select title="Video" id="videoSelect" v-model="currentVideoDeviceId">
-            <option v-for="(item) in videoDeviceList" :key="item.deviceId" :value="item.deviceId">{{ item.label }}
-            </option>
-          </select>
-        </label>
+          <button @click="handleStart">▶Start</button>
+          <button @click="stopBothVideoAndAudio">⏹Stop</button>
+          <button @click="clearSelect">🛑Reset</button>
+          <button @click="toggleFullScreen">📺Fullscreen</button>
 
-        <label for="audioSelect">
-          <span>Audio:</span>
-          <select name="Audio" id="audioSelect" v-model="currentAudioDeviceId">
-            <option v-for="(item) in audioDeviceList" :key="item.deviceId" :value="item.deviceId">{{ item.label }}
-            </option>
-          </select>
-        </label>
+          <label for="toggleControls">
+            <input
+              id="toggleControls"
+              type="checkbox"
+              v-model="isShowControls"
+              title="Show Controls"
+            />
+            <span>Controls</span>
+          </label>
 
-        <button @click="handleStart">▶Start</button>
-        <button @click="stopBothVideoAndAudio">⏹Stop</button>
-        <button @click="clearSelect">🛑Reset</button>
-        <button @click="toggleFullScreen">📺Full Screen</button>
+          <button @click="handleStartCaptureScreen">⏺Capture...</button>
+          <button @click="handleScreenshot">📷Screenshot</button>
+        </div>
 
-        <label for="toggleControls">
-          <input id="toggleControls" type="checkbox" v-model="isShowControls" title="Show Controls">
-          <span>Controls</span>
-        </label>
-
-        <button @click="handleStartCaptureScreen">⏺Screen Capture</button>
-        <button @click="handleScreenshot">📷Screenshot</button>
-      </div>
-
-      <div>
-        <a href="https://github.com/canwdev/web-mediadevices-player" target="_blank">🔗Github</a>
+        <div>
+          <a href="https://github.com/canwdev/web-mediadevices-player" target="_blank">🔗Github</a>
+        </div>
       </div>
     </div>
-
+    <video ref="videoRef" id="videoId" autoplay playsinline :controls="isShowControls"></video>
   </div>
-  <video ref="videoRef" id="videoId" autoplay playsinline :controls="isShowControls"></video>
 </template>
 
-<style scoped>
-.action-bar-wrap {
-  position: absolute;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  height: 70px;
-  user-select: none;
-}
-
-.action-bar.visible {
-  visibility: visible;
-  opacity: 1;
-}
-
-.action-bar {
+<style lang="scss">
+.web-mediadevices-player {
+  background-color: black;
   height: 100%;
-  padding: 10px;
-
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.53), transparent);
-  visibility: hidden;
-  opacity: 0;
-  transition: all .3s;
-
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.action-bar span,
-a {
-  color: white;
-  font-size: 12px;
-}
-
-.action-bar select {
-  width: 150px;
-  margin-left: 5px;
-  margin-right: 8px;
-}
-.action-bar select option{
-  background: white;
-  color: black;
-}
-
-.action-bar button,
-.action-bar select {
-  margin-left: 3px;
-  margin-right: 3px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 4px;
-  padding: 2px 4px;
-  box-sizing: border-box;
-  transition: all .3s;
-}
-.action-bar button:hover,
-.action-bar select:hover {
-  background: rgba(255, 255, 255, 0.5);
-  transition: none;
-}
-
-video {
   width: 100%;
-  height: 100%;
-  /* object-fit: contain; */
-}
+  position: relative;
+  overflow: hidden;
+  .action-bar-wrap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    height: 70px;
+    user-select: none;
+  }
 
-.loading-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  z-index: 20;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  visibility: hidden;
-  opacity: 0;
-  transition: all .3s;
-}
+  .action-bar {
+    height: 100%;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.53), transparent);
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.3s;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
 
-.loading-layer.visible {
-  visibility: visible;
-  opacity: 1;
+    &.visible {
+      visibility: visible;
+      opacity: 1;
+    }
+    span,
+    a {
+      color: white;
+      font-size: 12px;
+    }
+    select {
+      width: 150px;
+      line-height: 1;
+      option {
+        background: white;
+        color: black;
+      }
+    }
+
+    button,
+    select {
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 4px;
+      padding: 2px 4px;
+      box-sizing: border-box;
+      transition: all 0.3s;
+      height: 26px;
+      &:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transition: none;
+      }
+    }
+
+    .action-bar-side {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+    }
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    /* object-fit: contain; */
+  }
+
+  .loading-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    z-index: 20;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  .loading-layer.visible {
+    visibility: visible;
+    opacity: 1;
+  }
 }
 </style>
