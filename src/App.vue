@@ -66,6 +66,7 @@ export default defineComponent({
 
     const mouseHider = shallowRef()
     const actionBarRef = shallowRef()
+    const rootRef = shallowRef()
 
     onMounted(async () => {
       mouseHider.value = new CursorHider(
@@ -226,11 +227,26 @@ export default defineComponent({
       videoConfig.value = null
     }
 
+    // 切换容器元素全屏（如有）
+    function toggleParentFullScreen(flag = false) {
+      const containerEl = rootRef.value.closest('.vp-window')
+      if (!containerEl) {
+        return
+      }
+      if (flag) {
+        containerEl.classList.add('_fullscreen_content')
+      } else {
+        containerEl.classList.remove('_fullscreen_content')
+      }
+    }
+
     function toggleFullScreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen()
+        toggleParentFullScreen(true)
       } else if (document.exitFullscreen) {
         document.exitFullscreen()
+        toggleParentFullScreen(false)
       }
     }
 
@@ -280,13 +296,14 @@ export default defineComponent({
       handleStartCaptureScreen,
       handleScreenshot,
       actionBarRef,
+      rootRef,
     }
   },
 })
 </script>
 
 <template>
-  <div class="web-mediadevices-player">
+  <div ref="rootRef" class="web-mediadevices-player">
     <div class="loading-layer" :class="{visible: isLoading}">Loading...</div>
     <div class="action-bar-wrap">
       <div
