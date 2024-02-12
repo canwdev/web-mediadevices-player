@@ -10,6 +10,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "sass": "^1.70.0",
     "vue": "^3.2.47"
   },
   "devDependencies": {
