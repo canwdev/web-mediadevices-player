@@ -25,6 +25,7 @@ async function getEnumerateDevices() {
 export default defineComponent({
   setup() {
     const isLoading = ref(false)
+    const isTauri = ref(!!window.__TAURI__)
     const isShowControls = useLocalStorageBoolean('ls_key_is_show_controls', false)
     const deviceList = ref([])
     const videoRef = ref()
@@ -297,6 +298,7 @@ export default defineComponent({
       handleScreenshot,
       actionBarRef,
       rootRef,
+      isTauri,
     }
   },
 })
@@ -333,7 +335,7 @@ export default defineComponent({
           <button @click="handleStart">▶Start</button>
           <button @click="stopBothVideoAndAudio">⏹Stop</button>
           <button @click="clearSelect">🛑Reset</button>
-          <button @click="toggleFullScreen">📺Fullscreen</button>
+          <button v-if="!isTauri" @click="toggleFullScreen">📺Fullscreen</button>
 
           <label for="toggleControls">
             <input
