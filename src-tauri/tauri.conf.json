@@ -8,13 +8,16 @@
   },
   "package": {
     "productName": "web-mediadevices-player",
-    "version": "1.1.1"
+    "version": "1.1.2"
   },
   "tauri": {
     "allowlist": {
-      "all": false,
       "window": {
+        "setAlwaysOnTop": true,
         "setFullscreen": true
+      },
+      "shell": {
+        "open": true
       }
     },
     "bundle": {

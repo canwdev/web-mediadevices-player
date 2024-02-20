@@ -6,6 +6,7 @@ import {
   useLocalStorageObject,
 } from '@/hooks/use-local-storage'
 import {CursorHider, snapVideoImageDownload} from './utils/index'
+import TauriActions from '@/components/TauriActions.vue'
 
 async function getEnumerateDevices() {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -23,6 +24,7 @@ async function getEnumerateDevices() {
 }
 
 export default defineComponent({
+  components: {TauriActions},
   setup() {
     const isLoading = ref(false)
     const isTauri = ref(!!window.__TAURI__)
@@ -351,8 +353,9 @@ export default defineComponent({
           <button @click="handleScreenshot">📷Screenshot</button>
         </div>
 
-        <div>
-          <a href="https://github.com/canwdev/web-mediadevices-player" target="_blank">🔗Github</a>
+        <div class="action-bar-side right">
+          <TauriActions v-if="isTauri"/>
+          <a v-else href="https://github.com/canwdev/web-mediadevices-player" target="_blank">🔗Github</a>
         </div>
       </div>
     </div>
@@ -415,6 +418,7 @@ export default defineComponent({
       box-sizing: border-box;
       transition: all 0.3s;
       height: 26px;
+      font-size: 12px;
       &:hover {
         background: rgba(255, 255, 255, 0.5);
         transition: none;
@@ -426,6 +430,10 @@ export default defineComponent({
       align-items: center;
       gap: 6px;
       flex-wrap: wrap;
+
+      &.right {
+        justify-content: flex-end;
+      }
 
       label {
         display: flex;

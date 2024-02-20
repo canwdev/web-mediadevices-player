@@ -1,6 +1,6 @@
 {
   "name": "web-mediadevices-player",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@tauri-apps/api": "^1.5.3",
     "sass": "^1.70.0",
     "vue": "^3.2.47"
   },
