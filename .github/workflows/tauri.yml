@@ -1,9 +1,9 @@
-name: Release
+name: Tauri Auto Build
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+    branches: [ "tauri-auto-build" ]
+  pull_request:
+    branches: [ "tauri-auto-build" ]
 
 jobs:
   release:
