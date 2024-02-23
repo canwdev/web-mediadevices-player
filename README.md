@@ -10,7 +10,7 @@
 ![screenshot](screenshot.png)
 
 提示：
-- 现已支持 Tauri 打包的客户端！请到 [Releases](./releases) 页面下载
+- 现已支持 Tauri 打包的客户端！请到 [Releases](https://github.com/canwdev/web-mediadevices-player/releases) 页面下载
 - 此页面必须运行在 https 或 localhost 环境，其他环境（如：filesystem）可能无法访问设备。
 
 ## Recommended IDE Setup
