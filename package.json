@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^1.5.3",
+    "@vueuse/core": "^10.9.0",
     "sass": "^1.70.0",
     "vue": "^3.2.47"
   },
