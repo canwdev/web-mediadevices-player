@@ -1,10 +1,6 @@
 <script>
 import {defineComponent, onMounted, ref, computed, shallowRef, onBeforeUnmount} from 'vue'
-import {
-  useLocalStorageBoolean,
-  useLocalStorageString,
-  useLocalStorageObject,
-} from '@/hooks/use-local-storage'
+import {useFullscreen, useStorage} from '@vueuse/core'
 import {CursorHider, snapVideoImageDownload} from './utils/index'
 import TauriActions from '@/components/TauriActions.vue'
 
@@ -28,13 +24,13 @@ export default defineComponent({
   setup() {
     const isLoading = ref(false)
     const isTauri = ref(!!window.__TAURI__)
-    const isShowControls = useLocalStorageBoolean('ls_key_is_show_controls', false)
+    const isShowControls = useStorage('ls_key_is_show_controls', false)
     const deviceList = ref([])
     const videoRef = ref()
-    const currentVideoDeviceId = useLocalStorageString('ls_key_video_device_id', '')
-    const currentAudioDeviceId = useLocalStorageString('ls_key_audio_device_id', '')
+    const currentVideoDeviceId = useStorage('ls_key_video_device_id', '')
+    const currentAudioDeviceId = useStorage('ls_key_audio_device_id', '')
     // save config for next time reload
-    const videoConfig = useLocalStorageObject('ls_key_video_config')
+    const videoConfig = useStorage('ls_key_video_config', {})
     const mediaStreamRef = shallowRef()
 
     const filterDeviceList = (list, kind) => {
@@ -230,28 +226,8 @@ export default defineComponent({
       videoConfig.value = null
     }
 
-    // 切换容器元素全屏（如有）
-    function toggleParentFullScreen(flag = false) {
-      const containerEl = rootRef.value.closest('.vp-window')
-      if (!containerEl) {
-        return
-      }
-      if (flag) {
-        containerEl.classList.add('_fullscreen_content')
-      } else {
-        containerEl.classList.remove('_fullscreen_content')
-      }
-    }
-
-    function toggleFullScreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen()
-        toggleParentFullScreen(true)
-      } else if (document.exitFullscreen) {
-        document.exitFullscreen()
-        toggleParentFullScreen(false)
-      }
-    }
+    // 切换容器元素全屏
+    const { toggle: toggleFullScreen } = useFullscreen(rootRef)
 
     // https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen_Capture
     const handleStartCaptureScreen = async () => {
@@ -370,6 +346,7 @@ export default defineComponent({
   width: 100%;
   position: relative;
   overflow: hidden;
+
   .action-bar-wrap {
     position: absolute;
     left: 0;
@@ -394,14 +371,17 @@ export default defineComponent({
       visibility: visible;
       opacity: 1;
     }
+
     span,
     a {
       color: white;
       font-size: 12px;
     }
+
     select {
       width: 150px;
       line-height: 1;
+
       option {
         background: white;
         color: black;
@@ -419,6 +399,7 @@ export default defineComponent({
       transition: all 0.3s;
       height: 26px;
       font-size: 12px;
+
       &:hover {
         background: rgba(255, 255, 255, 0.5);
         transition: none;

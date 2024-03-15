@@ -19,7 +19,6 @@ export default defineComponent({
 
     function goGithub() {
       open("https://github.com/canwdev/web-mediadevices-player")
-
     }
     return {
       toggleFullScreen,
