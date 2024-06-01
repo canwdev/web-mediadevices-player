@@ -33,7 +33,7 @@ export default defineComponent({
 
 <template>
   <button @click="toggleFullScreen">Fullscreen {{ isFull ? '✕':'' }}</button>
-  <button @click="toggleTop">Top {{ isTop ? '📌':'' }}</button>
-  <button @click="goGithub">🔗Github</button>
+  <button @click="toggleTop" title="Pin window top">Top {{ isTop ? '📌':'' }}</button>
+  <button @click="goGithub" title="Github">ℹ️</button>
 </template>
 

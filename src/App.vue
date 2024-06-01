@@ -309,7 +309,7 @@ onMounted(() => {
           <button @click="handleScreenshot" title="Take a photo">📷Screenshot</button>
 
           <template v-if="videoRecorder">
-            <button v-if="Boolean(videoRecorder.mediaRecorder)" @click="videoRecorder.stop()" title="Take a photo" style="
+            <button v-if="Boolean(videoRecorder.mediaRecorder)" @click="videoRecorder.stop()" title="Save record" style="
     background: #F44336;">📹Save</button>
             <button v-else @click="videoRecorder.start()" title="Record canvas" >📹Record...</button>
           </template>
@@ -363,6 +363,9 @@ onMounted(() => {
     a {
       color: white;
       font-size: 12px;
+    }
+    a {
+      text-decoration: none;
     }
 
     select {

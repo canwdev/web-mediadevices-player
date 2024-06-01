@@ -9,7 +9,7 @@ export class VideoRecorder {
     this.videoElement = videoElement;
     this.mediaRecorder = null;
     this.recordedChunks = [];
-    console.log(this)
+    console.log('[VideoRecorder]', this)
   }
 
   start() {
@@ -27,6 +27,7 @@ export class VideoRecorder {
     };
 
     this.mediaRecorder.onstop = () => {
+      console.log('record stop', this.mediaRecorder);
       const blob = new Blob(this.recordedChunks, {type: 'video/webm'});
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -38,6 +39,7 @@ export class VideoRecorder {
 
     this.recordedChunks = [];
     this.mediaRecorder.start(10);
+    console.log('record start', this.mediaRecorder);
   }
 
   stop() {
