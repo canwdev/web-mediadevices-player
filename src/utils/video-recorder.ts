@@ -1,0 +1,48 @@
+import moment from 'moment/moment'
+
+export class VideoRecorder {
+  private videoElement: HTMLVideoElement;
+  private mediaRecorder: MediaRecorder;
+  private recordedChunks: any[];
+
+  constructor(videoElement: HTMLVideoElement) {
+    this.videoElement = videoElement;
+    this.mediaRecorder = null;
+    this.recordedChunks = [];
+    console.log(this)
+  }
+
+  start() {
+    const stream = this.videoElement.srcObject;
+    this.mediaRecorder = new MediaRecorder(stream, {
+      audioBitsPerSecond: 320000,
+      videoBitsPerSecond: 8000000,
+      mimeType: 'video/webm'
+    });
+
+    this.mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        this.recordedChunks.push(event.data);
+      }
+    };
+
+    this.mediaRecorder.onstop = () => {
+      const blob = new Blob(this.recordedChunks, {type: 'video/webm'});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `record_${moment().format('YYYY-MM-DD_HH-mm-ss')}.webm`;
+      link.click();
+      this.mediaRecorder = null
+    };
+
+    this.recordedChunks = [];
+    this.mediaRecorder.start(10);
+  }
+
+  stop() {
+    if (this.mediaRecorder) {
+      this.mediaRecorder.stop();
+    }
+  }
+}
