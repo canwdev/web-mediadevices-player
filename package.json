@@ -8,7 +8,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:tauri": "tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.5.3",
