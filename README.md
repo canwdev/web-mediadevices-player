@@ -2,10 +2,10 @@
 
 用于播放系统【视频/音频】输入设备的网页应用，使用了 [Media Capture and Streams API](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) 技术。
 
-用途：
-- HDMI to USB 采集卡投屏
-- Webcam 视频播放
-- 扩音器：Windows录音设备的“侦听”功能
+主要用途：
+- HDMI to USB 采集卡查看
+- Webcam 视频播放，桌面录屏
+- 截图，录制为 webm 格式
 
 ![screenshot](screenshot.png)
 
