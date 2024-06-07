@@ -2,6 +2,9 @@
 
 用于播放系统【视频/音频】输入设备的网页应用，使用了 [Media Capture and Streams API](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) 技术。
 
+- 网页版：https://canwdev.github.io/web-mediadevices-player/
+- Tauri 打包的客户端：[Releases](https://github.com/canwdev/web-mediadevices-player/releases)
+
 主要用途：
 - HDMI to USB 采集卡查看
 - Webcam 视频播放，桌面录屏
@@ -10,37 +13,25 @@
 ![screenshot](screenshot.png)
 
 提示：
-- 现已支持 Tauri 打包的客户端！请到 [Releases](https://github.com/canwdev/web-mediadevices-player/releases) 页面下载
-- 此页面必须运行在 https 或 localhost 环境，其他环境（如：filesystem）可能无法访问设备。
+- 此页面必须运行在 https 或 localhost 环境，其他环境（如：filesystem）无访问设备的权限。
+- 录制的 webm 视频拖动进度条可能存在问题，手动转码成 mp4 即可解决。
 
-## Recommended IDE Setup
+---
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+## 开发
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
+> 欢迎提交PR
 
 ```sh
-npm install
-```
+# 安装依赖
+yarn install
 
-### Compile and Hot-Reload for Development
+# 开发模式
+yarn dev
 
-```sh
-npm run dev
-```
+# 构建 Web 版
+yarn build
 
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
+# 构建 Tauri App
+yarn build:tauri
 ```
