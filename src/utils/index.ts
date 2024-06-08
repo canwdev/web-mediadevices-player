@@ -17,6 +17,7 @@ export function snapVideoImageDownload(video: HTMLVideoElement) {
 
 type showHideFnType = (arg0: {el: HTMLElement; isShow: boolean}) => void
 
+// 鼠标自动隐藏工具
 export class CursorHider {
   private timeoutID: any
   private targetEl: HTMLElement

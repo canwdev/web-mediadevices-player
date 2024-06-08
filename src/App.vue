@@ -4,14 +4,14 @@ import {useFullscreen, useStorage} from '@vueuse/core'
 import {CursorHider, snapVideoImageDownload} from './utils/index'
 import TauriActions from '@/components/TauriActions.vue'
 import {VideoRecorder} from '@/utils/video-recorder'
-import {a} from 'vite/dist/node/types.d-aGj9QkWt'
+import {type IVideoConfig, useSettingsStore} from '@/stores/settings'
 
-async function getEnumerateDevices() {
+const getEnumerateDevices = async () => {
   if (!navigator.mediaDevices?.enumerateDevices) {
     throw new Error('enumerateDevices() not supported.')
   } else {
     // List cameras and microphones.
-    const devices = await navigator.mediaDevices.enumerateDevices()
+    const devices: MediaDeviceInfo[] = await navigator.mediaDevices.enumerateDevices()
 
     // devices.forEach((device) => {
     //   console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`, device);
@@ -21,43 +21,48 @@ async function getEnumerateDevices() {
   }
 }
 
+const settingsStore = useSettingsStore()
+
 const isLoading = ref(false)
 const isTauri = ref(!!window.__TAURI__)
-const isShowControls = useStorage('ls_key_is_show_controls', false)
-const deviceList = ref([])
+const deviceList = ref<MediaDeviceInfo[]>([])
 const videoRef = ref()
-const currentVideoDeviceId = useStorage('ls_key_video_device_id', '')
-const currentAudioDeviceId = useStorage('ls_key_audio_device_id', '')
-// save config for next time reload
-const videoConfig = useStorage('ls_key_video_config', {})
-const mediaStreamRef = shallowRef()
 
-const filterDeviceList = (list, kind) => {
+const mediaStreamRef = shallowRef<MediaStream>()
+
+const isStreaming = computed(() => {
+  return Boolean(mediaStreamRef.value)
+})
+
+const filterDeviceList = (list: MediaDeviceInfo[], kind: string) => {
   return list.filter((item) => item.kind === kind && !!item.deviceId)
 }
 
 const videoDeviceList = computed(() => {
-  return filterDeviceList(deviceList.value, 'videoinput')
+  return [{label: '---', deviceId: ''}, ...filterDeviceList(deviceList.value, 'videoinput')]
 })
 const audioDeviceList = computed(() => {
-  return filterDeviceList(deviceList.value, 'audioinput')
+  return [{label: '---', deviceId: ''}, ...filterDeviceList(deviceList.value, 'audioinput')]
 })
 
 const updateDeviceList = async () => {
   try {
     isLoading.value = true
+    // console.log('updateDeviceList1')
     deviceList.value = await getEnumerateDevices()
-  } catch (e) {
-    console.error(e)
-    alert('Error: ' + e.message)
+    // console.log('updateDeviceList2')
+  } catch (error: any) {
+    console.error(error)
+    alert('Error: ' + error.message)
   } finally {
     isLoading.value = false
   }
 }
 
 const listenDeviceChange = () => {
+  // console.log('[listenDeviceChange]')
   navigator.mediaDevices.ondevicechange = async () => {
-    // console.log('ondevicechange', event)
+    // console.log('[ondevicechange]', event)
     await updateDeviceList()
   }
 }
@@ -83,7 +88,8 @@ onMounted(async () => {
   )
 
   try {
-    if (currentVideoDeviceId.value || currentAudioDeviceId.value) {
+    isLoading.value = true
+    if (settingsStore.currentVideoDeviceId || settingsStore.currentAudioDeviceId) {
       await startMediaStream()
       await updateDeviceList()
       listenDeviceChange()
@@ -92,14 +98,14 @@ onMounted(async () => {
 
     // catch error if this type of input device is not connected
     try {
-      mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({audio: true})
-      stopBothVideoAndAudio()
+      await navigator.mediaDevices.getUserMedia({audio: true})
+      stopMediaStreaming()
     } catch (e) {
       console.warn('getUserMedia audio Error:', e)
     }
     try {
-      mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({video: true})
-      stopBothVideoAndAudio()
+      await navigator.mediaDevices.getUserMedia({video: true})
+      stopMediaStreaming()
     } catch (e) {
       console.warn('getUserMedia video Error:', e)
     }
@@ -110,6 +116,8 @@ onMounted(async () => {
   } catch (error: any) {
     console.error(error)
     alert('Error: ' + error.message)
+  } finally {
+    isLoading.value = false
   }
 })
 
@@ -117,45 +125,55 @@ onBeforeUnmount(() => {
   if (mouseHider.value) {
     mouseHider.value.stop()
   }
-  stopBothVideoAndAudio()
+  stopMediaStreaming()
 })
 
-// https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+/**
+ * 开启视频流
+ * https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+ */
 const startMediaStream = async () => {
   try {
     isLoading.value = true
 
-    const videoId = currentVideoDeviceId.value
-    const audioId = currentAudioDeviceId.value
+    const videoId = settingsStore.currentVideoDeviceId
+    const audioId = settingsStore.currentAudioDeviceId
 
-    let vConfig
+    if (!videoId) {
+      return
+    }
+
+    let vConfig: IVideoConfig | undefined = undefined
 
     if (videoId) {
-      if (!videoConfig.value || videoConfig.value.deviceId !== videoId) {
-        const vDevice = videoDeviceList.value.find((i) => {
-          return i.deviceId === videoId
+      // 如果保存的id不匹配，则重新获取配置
+      if (!settingsStore.videoConfig || settingsStore.videoConfig.deviceId !== videoId) {
+        const vDevice = videoDeviceList.value.find((device) => {
+          return device.deviceId === videoId
         })
         console.log(vDevice)
 
         if (vDevice) {
+          // @ts-ignore
           const conf = vDevice.getCapabilities()
-          vConfig = videoConfig.value = {
+          settingsStore.videoConfig = {
             deviceId: conf.deviceId,
             height: conf.height.max,
             width: conf.width.max,
             frameRate: conf.frameRate.max,
           }
+          vConfig = settingsStore.videoConfig
         } else {
           vConfig = {deviceId: videoId}
         }
       } else {
-        vConfig = videoConfig.value
+        vConfig = settingsStore.videoConfig
       }
     }
 
     // console.log('vConfig', vConfig)
 
-    var constraints = {
+    const constraints = {
       // audio: true,
       audio: audioId
         ? {
@@ -196,12 +214,15 @@ const startMediaStream = async () => {
   }
 }
 
-const handleStart = () => {
-  stopBothVideoAndAudio()
+const handleStartStreaming = () => {
+  stopMediaStreaming()
   startMediaStream()
 }
 
-const stopBothVideoAndAudio = () => {
+/**
+ * 停止视频/音频流
+ */
+const stopMediaStreaming = () => {
   const video = videoRef.value
   video.pause()
   video.srcObject = null
@@ -216,23 +237,31 @@ const stopBothVideoAndAudio = () => {
       track.stop()
     }
   })
+  mediaStreamRef.value = undefined
 }
 
+/**
+ * 停止并清除选择的设备
+ */
 const clearSelect = () => {
-  stopBothVideoAndAudio()
-  currentVideoDeviceId.value = ''
-  currentAudioDeviceId.value = ''
-  videoConfig.value = null
+  stopMediaStreaming()
+  settingsStore.currentVideoDeviceId = ''
+  settingsStore.currentAudioDeviceId = ''
+  settingsStore.videoConfig = null
 }
 
 // 切换容器元素全屏
-const {toggle: toggleFullScreen} = useFullscreen(rootRef)
+const {toggle: toggleFullScreen, isFullscreen} = useFullscreen(rootRef)
 
-// https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen_Capture
-const handleStartCaptureScreen = async () => {
+/**
+ * 开启屏幕投影 串流
+ * https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen_Capture
+ */
+const handleStartStreamingCaptureScreen = async () => {
   try {
     isLoading.value = true
-    stopBothVideoAndAudio()
+    clearSelect()
+    stopMediaStreaming()
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: {
         displaySurface: 'window',
@@ -266,17 +295,24 @@ onMounted(() => {
 
 <template>
   <div ref="rootRef" class="web-mediadevices-player">
-    <div class="loading-layer" :class="{visible: isLoading}">Loading...</div>
+    <div class="loading-layer" :class="{visible: isLoading}">Connecting Devices...</div>
     <div class="action-bar-wrap">
       <div
         ref="actionBarRef"
         class="action-bar font-emoji"
-        :class="{visible: !currentVideoDeviceId && !currentAudioDeviceId}"
+        :class="{
+          visible: !settingsStore.currentVideoDeviceId && !settingsStore.currentAudioDeviceId,
+        }"
       >
         <div class="action-bar-side">
           <label for="videoSelect">
             <span>Video:</span>
-            <select title="Video" id="videoSelect" v-model="currentVideoDeviceId">
+            <select
+              title="Video"
+              id="videoSelect"
+              v-model="settingsStore.currentVideoDeviceId"
+              @change="handleStartStreaming"
+            >
               <option v-for="item in videoDeviceList" :key="item.deviceId" :value="item.deviceId">
                 {{ item.label }}
               </option>
@@ -285,29 +321,38 @@ onMounted(() => {
 
           <label for="audioSelect">
             <span>Audio:</span>
-            <select name="Audio" id="audioSelect" v-model="currentAudioDeviceId">
+            <select
+              name="Audio"
+              id="audioSelect"
+              v-model="settingsStore.currentAudioDeviceId"
+              @change="handleStartStreaming"
+            >
               <option v-for="item in audioDeviceList" :key="item.deviceId" :value="item.deviceId">
                 {{ item.label }}
               </option>
             </select>
           </label>
 
-          <button @click="handleStart">▶Start</button>
-          <button @click="stopBothVideoAndAudio">⏹Stop</button>
+          <button @click="stopMediaStreaming" v-if="isStreaming">⏹Stop</button>
+          <button @click="handleStartStreaming" v-else>▶Start</button>
           <button @click="clearSelect">🛑Reset</button>
 
           <label for="toggleControls" title="Toggle video element controls">
             <input
               id="toggleControls"
               type="checkbox"
-              v-model="isShowControls"
+              v-model="settingsStore.isShowControls"
               title="Show Controls"
             />
             <span>Controls</span>
           </label>
 
-          <button @click="handleStartCaptureScreen" title="Capture Screen">🖥️Capture...</button>
-          <button @click="handleScreenshot" title="Take a photo">📷Screenshot</button>
+          <button @click="handleStartStreamingCaptureScreen" title="Capture Screen">
+            🖥️Screen...
+          </button>
+          <button @click="handleScreenshot" title="Take a photo" :disabled="!isStreaming">
+            📷Screenshot
+          </button>
 
           <template v-if="videoRecorder">
             <button
@@ -318,12 +363,21 @@ onMounted(() => {
             >
               📹Save
             </button>
-            <button v-else @click="videoRecorder.start()" title="Record canvas">📹Record...</button>
+            <button
+              v-else
+              @click="videoRecorder.start()"
+              :disabled="!isStreaming"
+              title="Record canvas"
+            >
+              📹Record...
+            </button>
           </template>
         </div>
 
         <div class="action-bar-side right">
-          <button v-if="!isTauri" @click="toggleFullScreen">📺Fullscreen</button>
+          <button v-if="!isTauri" @click="toggleFullScreen">
+            {{ isFullscreen ? '✕ ' : '📺' }}Fullscreen
+          </button>
           <TauriActions v-if="isTauri" />
           <a
             v-else
@@ -335,7 +389,13 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <video ref="videoRef" id="videoId" autoplay playsinline :controls="isShowControls"></video>
+    <video
+      ref="videoRef"
+      id="videoId"
+      autoplay
+      playsinline
+      :controls="settingsStore.isShowControls"
+    ></video>
   </div>
 </template>
 
@@ -408,10 +468,23 @@ onMounted(() => {
       height: 26px;
       font-size: 12px;
 
-      &:hover {
-        background: rgba(255, 255, 255, 0.5);
-        transition: none;
+      &:not(&:disabled) {
+        &:hover {
+          background: rgba(255, 255, 255, 0.4);
+          transition: none;
+        }
       }
+
+      &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+    }
+    select {
+      //option {
+      //  background-color: #303030;
+      //  color: white;
+      //}
     }
 
     .action-bar-side {
