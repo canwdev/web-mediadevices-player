@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import {onMounted, ref, computed, shallowRef, onBeforeUnmount} from 'vue'
-import {useFullscreen, useStorage} from '@vueuse/core'
+import {set, useFullscreen, useStorage} from '@vueuse/core'
 import {CursorHider, snapVideoImageDownload} from './utils/index'
 import TauriActions from '@/components/TauriActions.vue'
 import {VideoRecorder} from '@/utils/video-recorder'
 import {type IVideoConfig, useSettingsStore} from '@/stores/settings'
+import SettingsPrompt from '@/components/SettingsPrompt.vue'
 
 const getEnumerateDevices = async () => {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -291,6 +292,25 @@ let videoRecorder = ref<VideoRecorder | null>(null)
 onMounted(() => {
   videoRecorder.value = new VideoRecorder(videoRef.value)
 })
+
+const showSettings = ref(true)
+
+const videoFilterStyle = computed(() => {
+  const style: any = {}
+  if (settingsStore.filterMirrorX && settingsStore.filterMirrorY) {
+    style.transform = `rotateX(180deg) rotateY(180deg)`
+  } else if (settingsStore.filterMirrorX) {
+    style.transform = `rotateX(180deg)`
+  } else if (settingsStore.filterMirrorY) {
+    style.transform = `rotateY(180deg)`
+  }
+  if (settingsStore.inputFilter) {
+    style.filter = settingsStore.inputFilter
+  } else if (settingsStore.selectedFilters) {
+    style.filter = settingsStore.selectedFilters.join(' ')
+  }
+  return style
+})
 </script>
 
 <template>
@@ -308,6 +328,7 @@ onMounted(() => {
           <label for="videoSelect">
             <span>Video:</span>
             <select
+              class="themed-button"
               title="Video"
               id="videoSelect"
               v-model="settingsStore.currentVideoDeviceId"
@@ -322,6 +343,7 @@ onMounted(() => {
           <label for="audioSelect">
             <span>Audio:</span>
             <select
+              class="themed-button"
               name="Audio"
               id="audioSelect"
               v-model="settingsStore.currentAudioDeviceId"
@@ -333,29 +355,32 @@ onMounted(() => {
             </select>
           </label>
 
-          <button @click="stopMediaStreaming" v-if="isStreaming">⏹Stop</button>
-          <button @click="handleStartStreaming" v-else>▶Start</button>
-          <button @click="clearSelect">🛑Reset</button>
+          <button class="themed-button" @click="stopMediaStreaming" v-if="isStreaming">
+            ⏹Stop
+          </button>
+          <button class="themed-button" @click="handleStartStreaming" v-else>▶Start</button>
+          <button class="themed-button" @click="clearSelect">🛑Reset</button>
 
-          <label for="toggleControls" title="Toggle video element controls">
-            <input
-              id="toggleControls"
-              type="checkbox"
-              v-model="settingsStore.isShowControls"
-              title="Show Controls"
-            />
-            <span>Controls</span>
-          </label>
-
-          <button @click="handleStartStreamingCaptureScreen" title="Capture Screen">
+          <span style="opacity: 0.5">|</span>
+          <button
+            class="themed-button"
+            @click="handleStartStreamingCaptureScreen"
+            title="Capture Screen"
+          >
             🖥️Screen...
           </button>
-          <button @click="handleScreenshot" title="Take a photo" :disabled="!isStreaming">
+          <button
+            class="themed-button"
+            @click="handleScreenshot"
+            title="Take a photo"
+            :disabled="!isStreaming"
+          >
             📷Screenshot
           </button>
 
           <template v-if="videoRecorder">
             <button
+              class="themed-button"
               v-if="Boolean(videoRecorder.mediaRecorder)"
               @click="videoRecorder.stop()"
               title="Save record"
@@ -365,6 +390,7 @@ onMounted(() => {
             </button>
             <button
               v-else
+              class="themed-button"
               @click="videoRecorder.start()"
               :disabled="!isStreaming"
               title="Record canvas"
@@ -375,7 +401,10 @@ onMounted(() => {
         </div>
 
         <div class="action-bar-side right">
-          <button v-if="!isTauri" @click="toggleFullScreen">
+          <button @click="showSettings = !showSettings" title="Settings" class="themed-button">
+            ⚙️
+          </button>
+          <button v-if="!isTauri" @click="toggleFullScreen" class="themed-button">
             {{ isFullscreen ? '✕ ' : '📺' }}Fullscreen
           </button>
           <TauriActions v-if="isTauri" />
@@ -384,8 +413,9 @@ onMounted(() => {
             href="https://github.com/canwdev/web-mediadevices-player"
             target="_blank"
             title="Github"
-            >ℹ️</a
           >
+            ℹ️
+          </a>
         </div>
       </div>
     </div>
@@ -395,7 +425,12 @@ onMounted(() => {
       autoplay
       playsinline
       :controls="settingsStore.isShowControls"
+      :style="videoFilterStyle"
     ></video>
+
+    <div class="video-fg-layer" v-if="settingsStore.filterShowFg"></div>
+
+    <SettingsPrompt v-model:visible="showSettings" />
   </div>
 </template>
 
@@ -456,30 +491,6 @@ onMounted(() => {
       cursor: pointer;
     }
 
-    button,
-    select {
-      background: rgba(0, 0, 0, 0.6);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 4px;
-      padding: 2px 4px;
-      box-sizing: border-box;
-      transition: all 0.3s;
-      height: 26px;
-      font-size: 12px;
-
-      &:not(&:disabled) {
-        &:hover {
-          background: rgba(255, 255, 255, 0.4);
-          transition: none;
-        }
-      }
-
-      &:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-      }
-    }
     select {
       //option {
       //  background-color: #303030;
@@ -509,6 +520,29 @@ onMounted(() => {
     width: 100%;
     height: 100%;
     /* object-fit: contain; */
+    transition: all 1s;
+  }
+
+  .video-fg-layer {
+    position: absolute;
+    content: '';
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-image: linear-gradient(
+      22.5deg,
+      #000 25%,
+      transparent 25%,
+      transparent 50%,
+      #000 50%,
+      #000 75%,
+      transparent 75%,
+      transparent
+    );
+    z-index: 2;
+    background-size: 4px 4px;
+    pointer-events: none;
   }
 
   .loading-layer {

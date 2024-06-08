@@ -21,7 +21,11 @@ function goGithub() {
 </script>
 
 <template>
-  <button @click="toggleFullScreen">Fullscreen {{ isFull ? '✕' : '' }}</button>
-  <button @click="toggleTop" title="Pin window top">Top {{ isTop ? '📌' : '' }}</button>
-  <button @click="goGithub" title="Github">ℹ️</button>
+  <button class="themed-button" @click="toggleFullScreen">
+    Fullscreen {{ isFull ? '✕' : '' }}
+  </button>
+  <button class="themed-button" @click="toggleTop" title="Pin window top">
+    Top {{ isTop ? '📌' : '' }}
+  </button>
+  <button class="themed-button" @click="goGithub" title="Github">ℹ️</button>
 </template>
