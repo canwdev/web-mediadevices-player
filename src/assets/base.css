@@ -41,6 +41,15 @@ body {
   }
 }
 
+.themed-input {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+}
+
 .themed-button {
   background: rgba(0, 0, 0, 0.6);
   color: white;
@@ -51,6 +60,7 @@ body {
   transition: all 0.3s;
   height: 26px;
   font-size: 12px;
+  cursor: pointer;
 
   &:not(&:disabled) {
     &:hover {

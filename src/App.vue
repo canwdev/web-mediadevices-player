@@ -15,8 +15,8 @@ const getEnumerateDevices = async () => {
     const devices: MediaDeviceInfo[] = await navigator.mediaDevices.enumerateDevices()
 
     // devices.forEach((device) => {
-    //   console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`, device);
-    // });
+    //   console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`, device)
+    // })
 
     return devices
   }
@@ -152,7 +152,7 @@ const startMediaStream = async () => {
         const vDevice = videoDeviceList.value.find((device) => {
           return device.deviceId === videoId
         })
-        console.log(vDevice)
+        console.log('vDevice', vDevice)
 
         if (vDevice) {
           // @ts-ignore
@@ -172,7 +172,7 @@ const startMediaStream = async () => {
       }
     }
 
-    // console.log('vConfig', vConfig)
+    console.log('vConfig', vConfig)
 
     const constraints = {
       // audio: true,
@@ -201,7 +201,7 @@ const startMediaStream = async () => {
 
     const stream = await navigator.mediaDevices.getUserMedia(constraints)
     mediaStreamRef.value = stream
-    // console.log('stream', stream)
+    console.log('stream', stream)
     const video = videoRef.value
     video.srcObject = stream
     video.onloadedmetadata = () => {
@@ -217,7 +217,9 @@ const startMediaStream = async () => {
 
 const handleStartStreaming = () => {
   stopMediaStreaming()
-  startMediaStream()
+  setTimeout(() => {
+    startMediaStream()
+  })
 }
 
 /**
@@ -293,7 +295,7 @@ onMounted(() => {
   videoRecorder.value = new VideoRecorder(videoRef.value)
 })
 
-const showSettings = ref(true)
+const showSettings = ref(false)
 
 const videoFilterStyle = computed(() => {
   const style: any = {}
@@ -484,11 +486,6 @@ const videoFilterStyle = computed(() => {
         background: white;
         color: black;
       }
-    }
-
-    button,
-    input[type='checkbox'] {
-      cursor: pointer;
     }
 
     select {
