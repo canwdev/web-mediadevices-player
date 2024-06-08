@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import {defineComponent, onMounted, ref, computed, shallowRef, onBeforeUnmount} from 'vue'
+import {onMounted, ref, computed, shallowRef, onBeforeUnmount} from 'vue'
 import {useFullscreen, useStorage} from '@vueuse/core'
 import {CursorHider, snapVideoImageDownload} from './utils/index'
 import TauriActions from '@/components/TauriActions.vue'
 import {VideoRecorder} from '@/utils/video-recorder'
+import {a} from 'vite/dist/node/types.d-aGj9QkWt'
 
 async function getEnumerateDevices() {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -78,7 +79,7 @@ onMounted(async () => {
         actionBarEl.classList.add('visible')
       }
     },
-    3000
+    3000,
   )
 
   try {
@@ -106,9 +107,9 @@ onMounted(async () => {
     await updateDeviceList()
 
     listenDeviceChange()
-  } catch (e) {
-    console.error(e)
-    alert('Error: ' + e.message)
+  } catch (error: any) {
+    console.error(error)
+    alert('Error: ' + error.message)
   }
 })
 
@@ -158,11 +159,11 @@ const startMediaStream = async () => {
       // audio: true,
       audio: audioId
         ? {
-          deviceId: audioId,
-          autoGainControl: false,
-          echoCancellation: false,
-          noiseSuppression: false,
-        }
+            deviceId: audioId,
+            autoGainControl: false,
+            echoCancellation: false,
+            noiseSuppression: false,
+          }
         : false,
       // audio: {
       //   channelCount: 1,
@@ -187,9 +188,9 @@ const startMediaStream = async () => {
     video.onloadedmetadata = () => {
       video.play()
     }
-  } catch (e) {
-    console.error(e)
-    alert('Error: ' + e.message)
+  } catch (error: any) {
+    console.error(error)
+    alert('Error: ' + error.message)
   } finally {
     isLoading.value = false
   }
@@ -245,9 +246,9 @@ const handleStartCaptureScreen = async () => {
     video.onloadedmetadata = () => {
       video.play()
     }
-  } catch (e) {
-    console.error(e)
-    alert('Error: ' + e.message)
+  } catch (error: any) {
+    console.error(error)
+    alert('Error: ' + error.message)
   } finally {
     isLoading.value = false
   }
@@ -309,16 +310,28 @@ onMounted(() => {
           <button @click="handleScreenshot" title="Take a photo">📷Screenshot</button>
 
           <template v-if="videoRecorder">
-            <button v-if="Boolean(videoRecorder.mediaRecorder)" @click="videoRecorder.stop()" title="Save record" style="
-    background: #F44336;">📹Save</button>
-            <button v-else @click="videoRecorder.start()" title="Record canvas" >📹Record...</button>
+            <button
+              v-if="Boolean(videoRecorder.mediaRecorder)"
+              @click="videoRecorder.stop()"
+              title="Save record"
+              style="background: #f44336"
+            >
+              📹Save
+            </button>
+            <button v-else @click="videoRecorder.start()" title="Record canvas">📹Record...</button>
           </template>
         </div>
 
         <div class="action-bar-side right">
           <button v-if="!isTauri" @click="toggleFullScreen">📺Fullscreen</button>
-          <TauriActions v-if="isTauri"/>
-          <a v-else href="https://github.com/canwdev/web-mediadevices-player" target="_blank" title="Github">ℹ️</a>
+          <TauriActions v-if="isTauri" />
+          <a
+            v-else
+            href="https://github.com/canwdev/web-mediadevices-player"
+            target="_blank"
+            title="Github"
+            >ℹ️</a
+          >
         </div>
       </div>
     </div>
@@ -378,7 +391,8 @@ onMounted(() => {
       }
     }
 
-    button, input[type='checkbox'] {
+    button,
+    input[type='checkbox'] {
       cursor: pointer;
     }
 
