@@ -72,7 +72,7 @@ const filterOptions = [
 
       <label>
         <span>filter:</span>
-        <input class="themed-button font-code" v-model="settingsStore.inputFilter" />
+        <input class="themed-input font-code" v-model="settingsStore.inputFilter" />
       </label>
     </div>
   </div>
