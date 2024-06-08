@@ -1,9 +1,14 @@
 name: Tauri Auto Build
+#on:
+#  push:
+#    branches: [ "tauri-auto-build" ]
+#  pull_request:
+#    branches: [ "tauri-auto-build" ]
+
 on:
   push:
-    branches: [ "tauri-auto-build" ]
-  pull_request:
-    branches: [ "tauri-auto-build" ]
+    tags:
+      - 'v*'
 
 jobs:
   release:
@@ -53,5 +58,5 @@ jobs:
           tagName: ${{ github.ref_name }} # This only works if your workflow triggers on new tags.
           releaseName: 'v__VERSION__' # tauri-action replaces \_\_VERSION\_\_ with the app version.
           releaseBody: 'See the assets to download and install this version.'
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
