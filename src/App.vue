@@ -99,13 +99,13 @@ onMounted(async () => {
 
     // catch error if this type of input device is not connected
     try {
-      await navigator.mediaDevices.getUserMedia({audio: true})
+      mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({audio: true})
       stopMediaStreaming()
     } catch (e) {
       console.warn('getUserMedia audio Error:', e)
     }
     try {
-      await navigator.mediaDevices.getUserMedia({video: true})
+      mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({video: true})
       stopMediaStreaming()
     } catch (e) {
       console.warn('getUserMedia video Error:', e)
