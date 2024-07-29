@@ -4,6 +4,7 @@
 
 - 网页版：https://canwdev.github.io/web-mediadevices-player/
 - Tauri 打包的客户端：[Releases](https://github.com/canwdev/web-mediadevices-player/releases)
+- [English Readme](https://github.com/canwdev/web-mediadevices-player/tree/master?tab=readme-ov-file#english)
 
 主要用途：
 - HDMI to USB 采集卡查看
