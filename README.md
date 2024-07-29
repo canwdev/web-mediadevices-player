@@ -36,3 +36,42 @@ yarn build
 # 构建 Tauri App
 yarn build:tauri
 ```
+
+---
+
+## English
+
+A web application for playing system [video/audio] input devices using the [Media Capture and Streams API](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) technology.
+
+- Web version: https://canwdev.github.io/web-mediadevices-player/
+- Tauri packaged client: [Releases](https://github.com/canwdev/web-mediadevices-player/releases)
+
+Main purposes:
+- View HDMI to USB capture card
+- Play webcam videos, desktop screen recording
+- Capture screenshots and record in webm format
+
+![screenshot](screenshot.png)
+
+Tips:
+- The first time you use it, it will request camera and microphone permissions. You can reject microphone permissions if not needed. After requesting, it will wait a few seconds to load the devices.
+- This page must run in https or localhost environments. Other environments (such as: filesystem) do not have access to devices.
+- There may be issues with dragging the progress bar of the recorded webm video. Manually transcoding it to mp4 can solve the problem.
+
+## Development
+
+> Contributions are welcome
+
+```sh
+# Install dependencies
+yarn install
+
+# Development mode
+yarn dev
+
+# Build the Web version
+yarn build
+
+# Build Tauri App
+yarn build:tauri
+```
