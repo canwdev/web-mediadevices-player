@@ -22,7 +22,8 @@
     "pinia-plugin-persistedstate": "^3.2.1",
     "sass": "^1.77.4",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.0",
+    "web-serial-polyfill": "^1.0.15"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",

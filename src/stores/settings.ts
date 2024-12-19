@@ -10,6 +10,9 @@ export interface IVideoConfig {
 interface ISettings {
   isShowControls: boolean
   fitMode: string
+  enableKvmInput: boolean
+  autoHideUI: boolean
+
   filterMirrorX: boolean
   filterMirrorY: boolean
   filterShowFg: boolean
@@ -26,6 +29,9 @@ export const useSettingsStore = defineStore('settingsStore', {
     return {
       isShowControls: false,
       fitMode: 'contain',
+      enableKvmInput: false,
+      autoHideUI: true,
+
       filterMirrorX: false,
       filterMirrorY: false,
       filterShowFg: false,

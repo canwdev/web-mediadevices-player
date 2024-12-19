@@ -5,14 +5,15 @@ export default {
 </script>
 
 <script setup lang="ts">
-import {onMounted, ref, computed, shallowRef, onBeforeUnmount} from 'vue'
+import {onMounted, ref, computed, shallowRef, onBeforeUnmount, watch} from 'vue'
 import {useFullscreen} from '@vueuse/core'
 import {CursorHider, snapVideoImageDownload} from './utils/index'
-import TauriActions from '@/components/TauriActions.vue'
+import TauriActions from '@/components/KvmPlayer/TauriActions.vue'
 import {VideoRecorder} from './utils/video-recorder'
 import {type IVideoConfig, useSettingsStore} from '@/stores/settings'
-import SettingsPrompt from '@/components/SettingsPrompt.vue'
+import SettingsPrompt from '@/components/KvmPlayer/SettingsPrompt.vue'
 import {useMainStore} from '@/stores/main'
+import KvmInput from '@/components/KvmPlayer/KvmInput.vue'
 
 const mainStore = useMainStore()
 
@@ -84,6 +85,19 @@ const mouseHider = shallowRef()
 const actionBarRef = shallowRef()
 const rootRef = shallowRef()
 
+watch(
+  () => settingsStore.autoHideUI,
+  (val) => {
+    if (mouseHider.value) {
+      if (val) {
+        mouseHider.value.start()
+      } else {
+        mouseHider.value.stop()
+      }
+    }
+  },
+)
+
 onMounted(async () => {
   mouseHider.value = new CursorHider(
     '#app',
@@ -99,6 +113,9 @@ onMounted(async () => {
     },
     3000,
   )
+  if (!settingsStore.autoHideUI) {
+    mouseHider.value.stop()
+  }
 
   try {
     isLoading.value = true
@@ -423,6 +440,11 @@ const videoFilterStyle = computed(() => {
             >
               📹Record...
             </button>
+
+            <template v-if="settingsStore.enableKvmInput">
+              <span style="opacity: 0.5">|</span>
+              <KvmInput />
+            </template>
           </template>
         </div>
 

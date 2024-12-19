@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import {window} from '@tauri-apps/api'
-import {open} from '@tauri-apps/api/shell'
+import {uniOpenUrl} from '@/utils'
 
 let curWin = window.getCurrent()
 const isFull = ref(false)
@@ -16,7 +16,7 @@ function toggleTop() {
 }
 
 function goGithub() {
-  open('https://github.com/canwdev/web-mediadevices-player')
+  uniOpenUrl('https://github.com/canwdev/web-mediadevices-player')
 }
 </script>
 
