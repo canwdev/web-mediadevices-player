@@ -65,5 +65,6 @@ export class CursorHider {
   stop() {
     document.removeEventListener('mousemove', this.showCursor)
     clearTimeout(this.timeoutID)
+    this.showHideFn({el: this.targetEl, isShow: true})
   }
 }

@@ -57,7 +57,7 @@ body {
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 4px;
-  padding: 2px 4px;
+  padding: 2px 6px;
   box-sizing: border-box;
   transition: all 0.3s;
   height: 26px;
@@ -74,6 +74,13 @@ body {
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+  }
+
+  &.blue {
+    background-color: dodgerblue !important;
+  }
+  &.red {
+    background-color: #F44336 !important;
   }
 }
 

@@ -4168,6 +4168,11 @@ vue@^3.4.21:
     "@vue/server-renderer" "3.4.27"
     "@vue/shared" "3.4.27"
 
+web-serial-polyfill@^1.0.15:
+  version "1.0.15"
+  resolved "https://registry.npmmirror.com/web-serial-polyfill/-/web-serial-polyfill-1.0.15.tgz#0c0b4cd5f32b8c07243d2ffeea484892f46986b1"
+  integrity sha512-usZN7kGRkEWr8DzRWxW+og55L1fHo4hNIwxCSCfWKpM+i0L+2AwzupMvkDFxnJNqUFOhLaD3PlgAOJxUOUrAoA==
+
 webidl-conversions@^4.0.2:
   version "4.0.2"
   resolved "https://registry.npmmirror.com/webidl-conversions/-/webidl-conversions-4.0.2.tgz#a855980b1f0b6b359ba1d5d9fb39ae941faa63ad"

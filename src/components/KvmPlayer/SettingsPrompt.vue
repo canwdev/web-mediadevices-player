@@ -3,6 +3,7 @@ import {ref} from 'vue'
 import {useVModel} from '@vueuse/core'
 import {useSettingsStore} from '@/stores/settings'
 import {onClickOutside} from '@vueuse/core'
+import {uniOpenUrl} from '@/utils'
 
 const settingsStore = useSettingsStore()
 interface Props {
@@ -30,6 +31,10 @@ const rootRef = ref(null)
 onClickOutside(rootRef, (event) => {
   mVisible.value = false
 })
+
+const kvmInputHelp = () => {
+  uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
+}
 </script>
 
 <template>
@@ -42,16 +47,27 @@ onClickOutside(rootRef, (event) => {
           `${settingsStore.videoConfig.width}x${settingsStore.videoConfig.height} ${parseFloat((settingsStore.videoConfig.frameRate || 0).toFixed(2))}fps`
         }}</code>
 
-        <label title="Toggle video element controls" class="cursor-pointer">
-          <input type="checkbox" v-model="settingsStore.isShowControls" />
-          <span>Video Controls</span>
-        </label>
-
         <label title="Fit">
           <span>Fit </span>
           <select style="flex: 1" v-model="settingsStore.fitMode" class="themed-input">
             <option v-for="v in ['contain', 'cover', 'fill', 'none']" :key="v">{{ v }}</option>
           </select>
+        </label>
+
+        <label title="Toggle video element controls" class="cursor-pointer">
+          <input type="checkbox" v-model="settingsStore.isShowControls" />
+          <span>Video Controls UI</span>
+        </label>
+
+        <label class="cursor-pointer">
+          <input type="checkbox" v-model="settingsStore.autoHideUI" />
+          <span>Auto Hide UI</span>
+        </label>
+
+        <label class="cursor-pointer">
+          <input type="checkbox" v-model="settingsStore.enableKvmInput" />
+          <span>Enable KVM Input</span>
+          <button @click="kvmInputHelp" class="themed-button">CH9329 ?</button>
         </label>
 
         <div class="cursor-help" title="Filter will not apply to screenshot/record">
