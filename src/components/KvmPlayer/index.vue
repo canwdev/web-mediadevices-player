@@ -354,12 +354,21 @@ const videoFilterStyle = computed(() => {
   }
   return style
 })
+
+const kvmInputRef = ref()
+// 进入KVM控制模式
+const enterInputMode = () => {
+  if (!kvmInputRef.value) {
+    return
+  }
+  kvmInputRef.value.autoEnable()
+}
 </script>
 
 <template>
-  <div ref="rootRef" class="web-mediadevices-player">
+  <div ref="rootRef" class="web-mediadevices-player" @click="enterInputMode">
     <div class="loading-layer" :class="{visible: isLoading}">Connecting Devices...</div>
-    <div class="action-bar-wrap">
+    <div @click.stop class="action-bar-wrap">
       <div
         ref="actionBarRef"
         class="action-bar font-emoji"
@@ -443,7 +452,7 @@ const videoFilterStyle = computed(() => {
 
             <template v-if="settingsStore.enableKvmInput">
               <span style="opacity: 0.5">|</span>
-              <KvmInput />
+              <KvmInput ref="kvmInputRef" />
             </template>
           </template>
         </div>
@@ -468,7 +477,7 @@ const videoFilterStyle = computed(() => {
       </div>
     </div>
     <video
-      @dblclick="toggleFullScreen"
+      @dblclick.stop="toggleFullScreen"
       ref="videoRef"
       id="videoId"
       autoplay
@@ -479,7 +488,7 @@ const videoFilterStyle = computed(() => {
 
     <div class="video-fg-layer" v-if="settingsStore.filterShowFg"></div>
 
-    <SettingsPrompt v-model:visible="showSettings" />
+    <SettingsPrompt @click.stop v-model:visible="showSettings" />
   </div>
 </template>
 
