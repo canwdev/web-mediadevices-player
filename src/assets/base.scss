@@ -1,0 +1,214 @@
+
+body,
+html,
+#app {
+  width: 100%;
+  height: 100%;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background-color: #000000;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.font-code {
+  font-family: 'Operator Mono', 'Source Code Pro', Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.font-emoji, .font-emoji * {
+  font-family: "Segoe UI Emoji", "SF Pro SC", "SF Pro Text", "SF Pro Icons", "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+}
+
+
+.btn-no-style {
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  text-decoration: none;
+
+  &:active {
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.themed-input {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+}
+
+.themed-button {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  transition: all 0.3s;
+  height: 26px;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:not(&:disabled) {
+    &:hover {
+      background: rgba(70, 70, 70, 0.4);
+      transition: none;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+.cursor-help {
+  cursor: help;
+}
+
+
+
+.scrollbar-mini * {
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    overflow: overlay;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    background-color: rgba(192, 192, 192, 0.63);
+
+    &:hover {
+      background-color: #bebebe;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    border-radius: 4px;
+    background: transparent;
+  }
+  &::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
+}
+
+.flex-row-center-gap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+
+/* Vue transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transform: scale(1);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-up-enter-from,
+.fade-up-leave-to {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.fade-down-enter-active,
+.fade-down-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-down-enter-from,
+.fade-down-leave-to {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+.fade-left-enter-active,
+.fade-left-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-left-enter-from,
+.fade-left-leave-to {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+.fade-right-enter-active,
+.fade-right-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-right-enter-from,
+.fade-right-leave-to {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+
+/* 1. declare transition */
+.fadeMove-move,
+.fadeMove-enter-active,
+.fadeMove-leave-active {
+  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+/* 2. declare enter from and leave to state */
+.fadeMove-enter-from,
+.fadeMove-leave-to {
+  opacity: 0;
+  transform: scaleY(0.01);
+}
+
+/* 3. ensure leaving items are taken out of layout flow so that moving
+      animations can be calculated correctly. */
+.fadeMove-leave-active {
+  position: absolute;
+}
