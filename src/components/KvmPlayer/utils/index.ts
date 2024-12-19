@@ -1,5 +1,4 @@
 import moment from 'moment/moment'
-import type {a} from 'vite/dist/node/types.d-aGj9QkWt'
 
 export function snapVideoImageDownload(video: HTMLVideoElement) {
   const canvas = document.createElement('canvas')

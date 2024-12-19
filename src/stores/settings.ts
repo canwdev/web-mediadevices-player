@@ -9,6 +9,7 @@ export interface IVideoConfig {
 
 interface ISettings {
   isShowControls: boolean
+  fitMode: string
   filterMirrorX: boolean
   filterMirrorY: boolean
   filterShowFg: boolean
@@ -24,6 +25,7 @@ export const useSettingsStore = defineStore('settingsStore', {
   state: (): ISettings => {
     return {
       isShowControls: false,
+      fitMode: 'contain',
       filterMirrorX: false,
       filterMirrorY: false,
       filterShowFg: false,
