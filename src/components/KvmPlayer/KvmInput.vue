@@ -5,7 +5,6 @@ import {createPrompt} from '@/components/PromptInput/use-prompt-input'
 import {useEventListener, usePointerLock} from '@vueuse/core'
 import {KEYS} from '@/components/KvmPlayer/utils/input-enum'
 import type {SerialPort} from 'web-serial-polyfill'
-import {ok} from 'assert'
 
 const mainStore = useMainStore()
 
@@ -31,6 +30,7 @@ const writeSerial = (...args: any) => {
     })
     return
   }
+  // console.log(args)
   return writer.value.write(...args)
 }
 
@@ -190,11 +190,13 @@ const handleKey = async (e) => {
   ])
   await writeSerial(value)
 }
+useEventListener(document, 'keydown', handleKey)
 
 const selectedComboKey = ref('')
 const comboKeyOptions = [
   {value: '', label: 'Send Combo Keys...'},
   {value: 'alt_f4', label: 'Alt+F4'},
+  {value: 'meta', label: 'Meta'},
   {value: 'ctrl_alt_del', label: 'Ctrl+Alt+Del'},
   {value: 'ctrl_alt_f1', label: 'Ctrl+Alt+F1'},
   {value: 'ctrl_alt_f2', label: 'Ctrl+Alt+F2'},
@@ -213,9 +215,23 @@ const handleSendComboKey = async () => {
   }
 
   let key, controlBits
-  if (value === 'alt_f4') [key, controlBits] = ['F4', 0b00000100]
-  if (value === 'ctrl_alt_del') [key, controlBits] = ['Delete', 0b00000101]
-  if (/^ctrl_alt_f\d+$/.test(value)) [key, controlBits] = ['F' + value.slice(10), 0b00000101]
+
+  if (/^ctrl_alt_f\d+$/.test(value)) {
+    ;[key, controlBits] = ['F' + value.slice(10), 0b00000101]
+  } else {
+    switch (value) {
+      case 'alt_f4':
+        ;[key, controlBits] = ['F4', 0b00000100]
+        break
+      case 'meta':
+        ;[key, controlBits] = ['Meta', 0b00001000]
+        break
+      case 'ctrl_alt_del':
+        ;[key, controlBits] = ['Delete', 0b00000101]
+        break
+    }
+  }
+
   const [hidCode] = KEYS.get(key)
   const sv = new Uint8Array([
     ...genPacket(2, controlBits, 0, hidCode, 0, 0, 0, 0, 0),
@@ -231,7 +247,6 @@ const autoEnable = () => {
     initSerial()
     return
   }
-  rootRef.value.focus()
   lock(rootRef.value)
 }
 
@@ -241,7 +256,7 @@ defineExpose({
 </script>
 
 <template>
-  <div @keydown="handleKey" ref="rootRef" class="kvm-input flex-row-center-gap" tabindex="-1">
+  <div ref="rootRef" class="kvm-input flex-row-center-gap" tabindex="-1">
     <button v-if="!serialPort" @click="initSerial" class="themed-button blue">Init Serial</button>
     <template v-else>
       <button @click="closeSerial" class="themed-button">Close Serial</button>
