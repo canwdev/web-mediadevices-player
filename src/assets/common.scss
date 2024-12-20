@@ -1,28 +1,14 @@
-
-body,
-html,
-#app {
-  width: 100%;
-  height: 100%;
-}
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  background-color: #000000;
-  color: white;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+.font-italic {
+  font-style: italic;
 }
 
 .font-code {
-  font-family: 'Operator Mono', 'Source Code Pro', Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-family: 'Victor Mono Regular', 'Cascadia Code', '等距更纱黑体 SC', 'Monaco', 'Fira Code Medium', Consolas, 'Courier New', monospace;
 }
 
-.font-emoji, .font-emoji * {
+.font-emoji {
   font-family: "Segoe UI Emoji", "SF Pro SC", "SF Pro Text", "SF Pro Icons", "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
-
 
 .btn-no-style {
   background: none;
@@ -43,62 +29,13 @@ body {
   }
 }
 
-.themed-input {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 4px;
-  padding: 2px 4px;
-  box-sizing: border-box;
-}
-
-.themed-button {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 4px;
-  padding: 2px 6px;
-  box-sizing: border-box;
-  transition: all 0.3s;
-  height: 26px;
-  font-size: 12px;
-  cursor: pointer;
-
-  &:not(&:disabled) {
-    &:hover {
-      background: rgba(70, 70, 70, 0.4);
-      transition: none;
-    }
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  &.blue {
-    background-color: dodgerblue !important;
-  }
-  &.red {
-    background-color: #F44336 !important;
-  }
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-.cursor-help {
-  cursor: help;
-}
-
-
-
 .scrollbar-mini * {
 
   &::-webkit-scrollbar {
     width: 8px;
     height: 8px;
     overflow: overlay;
+    background: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
@@ -116,9 +53,17 @@ body {
     border-radius: 4px;
     background: transparent;
   }
+
   &::-webkit-scrollbar-corner {
     background-color: transparent;
   }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+.cursor-help {
+  cursor: help;
 }
 
 .flex-row-center-gap {

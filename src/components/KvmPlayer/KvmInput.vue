@@ -1,22 +1,21 @@
 <script lang="ts" setup>
 import {onBeforeUnmount, onMounted, ref, shallowRef} from 'vue'
-import {useMainStore} from '@/stores/main'
-import {createPrompt} from '@/components/PromptInput/use-prompt-input'
+import {createPrompt} from '@/components/PromptInput/prompt-input'
 import {useEventListener, useMouse, usePointerLock} from '@vueuse/core'
 import {ASCII_KEYS} from '@/components/KvmPlayer/utils/keys-enum'
-import type {SerialPort} from 'web-serial-polyfill'
 import {useSerialState} from '@/components/KvmPlayer/utils/serial-state'
 import {CmdType, genPacket} from '@/components/KvmPlayer/utils/ch9329'
+import {useSettingsStore} from '@/stores/settings'
 
-const mainStore = useMainStore()
-
+const settingsStore = useSettingsStore()
 const {reader, writer, serialPort} = useSerialState()
 
 const readSerial = (...args: any) => {
   if (!reader.value) {
-    mainStore.addNotification({
+    window.$notification({
       type: 'error',
       message: 'Serial port not initialized',
+      timeout: 3000,
     })
     return
   }
@@ -24,9 +23,10 @@ const readSerial = (...args: any) => {
 }
 const writeSerial = (...args: any) => {
   if (!writer.value) {
-    mainStore.addNotification({
+    window.$notification({
       type: 'error',
       message: 'Serial port not initialized',
+      timeout: 3000,
     })
     return
   }
@@ -52,7 +52,9 @@ const initSerial = async () => {
         usbTransferInterfaceClass: 255,
       })
     }
-    const baudRate = (await createPrompt('9600', 'baud rate')) || '9600'
+    const baudRate = settingsStore.baudRate || (await createPrompt('9600', 'baud rate')) || '9600'
+    settingsStore.baudRate = baudRate
+
     // Opening port
     const opened = port.open({baudRate: +baudRate})
     const timeout = new Promise((resolve, reject) => setTimeout(reject, 900))
@@ -63,9 +65,10 @@ const initSerial = async () => {
     console.log(port)
   } catch (error: any) {
     console.error(error)
-    mainStore.addNotification({
+    window.$notification({
       type: 'error',
       message: error.message,
+      timeout: 5000,
     })
   }
 }
@@ -94,7 +97,11 @@ const sendText = async (text: string | null) => {
   // switch to the ascii mode of ch9329 needs reconnect, which is unacceptable
   for (const key of text) {
     if (!ASCII_KEYS.has(key)) {
-      alert(`char [ ${key} ] is not an ascii char`)
+      window.$notification({
+        type: 'error',
+        message: `char [ ${key} ] is not an ascii char`,
+        timeout: 3000,
+      })
       return
     }
     const [hidCode, shift] = ASCII_KEYS.get(key)
@@ -109,9 +116,9 @@ const sendText = async (text: string | null) => {
 }
 
 const rootRef = ref()
+
+// https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock
 const {isSupported, lock, unlock, element, triggerElement} = usePointerLock(rootRef, {
-  // 禁用操作系统级别的鼠标加速调整，而是访问原始鼠标输入。
-  // https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock
   unadjustedMovement: true,
 })
 
@@ -196,30 +203,51 @@ const showSendInput = async () => {
   const text = await createPrompt('', 'Send Text', {})
   sendText(text)
 }
-const eatKeys = new Set() // avoid tailing control keys (press and release key A will emit event keyup[A] and keyup[Shift])
 
 const handleKeydown = async (event: KeyboardEvent) => {
-  event.preventDefault()
   if (!serialPort.value) {
     return
   }
+  event.preventDefault()
 
-  if (eatKeys.has(event.key)) return eatKeys.delete(event.key)
-  // console.log(e);
+  if (event.ctrlKey && event.altKey) {
+    await unlock()
+  }
+
   const [hidCode, shift] = ASCII_KEYS.get(event.key)
   let controlBits = 0
-  if (shift) controlBits |= 0b00000010
-  if (event.ctrlKey) (controlBits |= 0b00000001), eatKeys.add('Control')
-  if (event.shiftKey) (controlBits |= 0b00000010), eatKeys.add('Shift')
-  if (event.altKey) (controlBits |= 0b00000100), eatKeys.add('Alt')
-  if (event.metaKey) (controlBits |= 0b00001000), eatKeys.add('Meta')
+  if (shift) {
+    controlBits |= 0b00000010
+  }
+  if (event.ctrlKey) {
+    controlBits |= 0b00000001
+  }
+  if (event.shiftKey) {
+    controlBits |= 0b00000010
+  }
+  if (event.altKey) {
+    controlBits |= 0b00000100
+  }
+  if (event.metaKey) {
+    controlBits |= 0b00001000
+  }
   const value = new Uint8Array([
     ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, controlBits, 0, hidCode, 0, 0, 0, 0, 0),
+  ])
+  await writeSerial(value)
+}
+const handleKeyup = async (event: KeyboardEvent) => {
+  if (!serialPort.value) {
+    return
+  }
+  event.preventDefault()
+  const value = new Uint8Array([
     ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, 0, 0, 0, 0, 0, 0, 0, 0),
   ])
   await writeSerial(value)
 }
 useEventListener(document, 'keydown', handleKeydown)
+useEventListener(document, 'keyup', handleKeyup)
 
 const selectedComboKey = ref('')
 const comboKeyOptions = [

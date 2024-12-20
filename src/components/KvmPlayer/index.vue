@@ -12,10 +12,7 @@ import TauriActions from '@/components/KvmPlayer/TauriActions.vue'
 import {VideoRecorder} from './utils/video-recorder'
 import {type IVideoConfig, useSettingsStore} from '@/stores/settings'
 import SettingsPrompt from '@/components/KvmPlayer/SettingsPrompt.vue'
-import {useMainStore} from '@/stores/main'
 import KvmInput from '@/components/KvmPlayer/KvmInput.vue'
-
-const mainStore = useMainStore()
 
 const getEnumerateDevices = async () => {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -64,9 +61,10 @@ const updateDeviceList = async () => {
     // console.log('updateDeviceList2')
   } catch (error: any) {
     console.error(error)
-    mainStore.addNotification({
+    window.$notification({
       type: 'error',
       message: error.message,
+      timeout: 5000,
     })
   } finally {
     isLoading.value = false
@@ -145,9 +143,10 @@ onMounted(async () => {
     listenDeviceChange()
   } catch (error: any) {
     console.error(error)
-    mainStore.addNotification({
+    window.$notification({
       type: 'error',
       message: error.message,
+      timeout: 5000,
     })
   } finally {
     isLoading.value = false
@@ -241,9 +240,10 @@ const startMediaStream = async () => {
     }
   } catch (error: any) {
     console.error(error)
-    mainStore.addNotification({
+    window.$notification({
       type: 'error',
       message: error.message,
+      timeout: 5000,
     })
   } finally {
     isLoading.value = false
@@ -315,9 +315,10 @@ const handleStartStreamingCaptureScreen = async () => {
     }
   } catch (error: any) {
     console.error(error)
-    mainStore.addNotification({
+    window.$notification({
       type: 'error',
       message: error.message,
+      timeout: 5000,
     })
   } finally {
     isLoading.value = false
@@ -367,13 +368,17 @@ const enterInputMode = () => {
 
 <template>
   <div ref="rootRef" class="web-mediadevices-player" @click="enterInputMode">
-    <div class="loading-layer" :class="{visible: isLoading}">Connecting Devices...</div>
+    <transition name="fade">
+      <div class="loading-layer" v-if="isLoading">Connecting Devices...</div>
+    </transition>
     <div @click.stop :class="{absolute: settingsStore.autoHideUI}" class="action-bar-wrap">
       <div
         ref="actionBarRef"
         class="action-bar font-emoji"
         :class="{
-          visible: !settingsStore.currentVideoDeviceId && !settingsStore.currentAudioDeviceId,
+          visible:
+            !settingsStore.autoHideUI ||
+            (!settingsStore.currentVideoDeviceId && !settingsStore.currentAudioDeviceId),
         }"
       >
         <div class="action-bar-side">
@@ -627,8 +632,6 @@ const enterInputMode = () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    visibility: hidden;
-    opacity: 0;
     transition: all 0.3s;
   }
 
