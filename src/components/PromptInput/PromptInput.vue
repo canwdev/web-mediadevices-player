@@ -53,7 +53,7 @@ const handleOutsideClick = () => {
 
 <template>
   <transition name="fade">
-    <div class="popup-window" @click="handleOutsideClick" v-if="mVisible">
+    <div class="popup-window" @keydown.stop @keyup.stop @click="handleOutsideClick" v-if="mVisible">
       <form
         ref="formRef"
         @submit.prevent="handleConfirm"

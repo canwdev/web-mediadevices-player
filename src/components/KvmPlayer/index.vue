@@ -368,7 +368,7 @@ const enterInputMode = () => {
 <template>
   <div ref="rootRef" class="web-mediadevices-player" @click="enterInputMode">
     <div class="loading-layer" :class="{visible: isLoading}">Connecting Devices...</div>
-    <div @click.stop class="action-bar-wrap">
+    <div @click.stop :class="{absolute: settingsStore.autoHideUI}" class="action-bar-wrap">
       <div
         ref="actionBarRef"
         class="action-bar font-emoji"
@@ -476,15 +476,18 @@ const enterInputMode = () => {
         </div>
       </div>
     </div>
-    <video
-      @dblclick.stop="toggleFullScreen"
-      ref="videoRef"
-      id="videoId"
-      autoplay
-      playsinline
-      :controls="settingsStore.isShowControls"
-      :style="videoFilterStyle"
-    ></video>
+
+    <div class="video-wrapper">
+      <video
+        @dblclick.stop="toggleFullScreen"
+        ref="videoRef"
+        id="videoId"
+        autoplay
+        playsinline
+        :controls="settingsStore.isShowControls"
+        :style="videoFilterStyle"
+      ></video>
+    </div>
 
     <div class="video-fg-layer" v-if="settingsStore.filterShowFg"></div>
 
@@ -499,81 +502,94 @@ const enterInputMode = () => {
   width: 100%;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   .action-bar-wrap {
-    position: absolute;
-    left: 0;
-    right: 0;
     z-index: 10;
-    height: 70px;
     user-select: none;
-  }
 
-  .action-bar {
-    height: 100%;
-    padding: 10px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.53), transparent);
-    visibility: hidden;
-    opacity: 0;
-    transition: all 0.3s;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-
-    &.visible {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    span,
-    a {
-      color: white;
-      font-size: 12px;
-    }
-    a {
-      text-decoration: none;
-    }
-
-    select {
-      width: 150px;
-      line-height: 1;
-
-      option {
-        background: white;
-        color: black;
-      }
-    }
-
-    select {
-      //option {
-      //  background-color: #303030;
-      //  color: white;
-      //}
-    }
-
-    .action-bar-side {
+    .action-bar {
+      height: 100%;
+      padding: 4px;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.53), transparent);
+      visibility: hidden;
+      opacity: 0;
+      transition: all 0.3s;
       display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
 
-      &.right {
-        justify-content: flex-end;
+      &.visible {
+        visibility: visible;
+        opacity: 1;
       }
 
-      label {
+      span,
+      a {
+        color: white;
+        font-size: 12px;
+      }
+      a {
+        text-decoration: none;
+      }
+
+      select {
+        width: 150px;
+        line-height: 1;
+
+        option {
+          background: white;
+          color: black;
+        }
+      }
+
+      select {
+        //option {
+        //  background-color: #303030;
+        //  color: white;
+        //}
+      }
+
+      .action-bar-side {
         display: flex;
         align-items: center;
-        gap: 2px;
+        gap: 6px;
+        flex-wrap: wrap;
+
+        &.right {
+          justify-content: flex-end;
+        }
+
+        label {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+        }
+      }
+    }
+
+    &.absolute {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 70px;
+      .action-bar {
+        padding: 10px;
       }
     }
   }
 
-  video {
-    width: 100%;
-    height: 100%;
-    /* object-fit: contain; */
-    transition: all 1s;
+  .video-wrapper {
+    flex: 1;
+    overflow: hidden;
+
+    video {
+      width: 100%;
+      height: 100%;
+      /* object-fit: contain; */
+      transition: all 1s;
+    }
   }
 
   .video-fg-layer {
