@@ -39,7 +39,13 @@ const kvmInputHelp = () => {
 
 <template>
   <transition name="fade">
-    <div ref="rootRef" v-if="mVisible" class="settings-prompt panel-blur-bg">
+    <div
+      ref="rootRef"
+      v-if="mVisible"
+      class="settings-prompt panel-blur-bg"
+      @keydown.stop
+      @keyup.stop
+    >
       <button class="btn-close btn-no-style" @click="mVisible = !mVisible">×</button>
 
       <div class="settings-content" @contextmenu.prevent>
@@ -68,6 +74,17 @@ const kvmInputHelp = () => {
           <input type="checkbox" v-model="settingsStore.enableKvmInput" />
           <span>Enable KVM Input</span>
           <button @click="kvmInputHelp" class="themed-button">CH9329 ?</button>
+        </label>
+
+        <label v-if="settingsStore.enableKvmInput" class="">
+          <span>Baud Rate</span>
+          <input
+            class="themed-input"
+            type="number"
+            step="1"
+            v-model="settingsStore.baudRate"
+            placeholder="9600"
+          />
         </label>
 
         <div class="cursor-help" title="Filter will not apply to screenshot/record">

@@ -14,7 +14,7 @@ const props = withDefaults(
   {
     value: '',
     modelValue: false,
-    closeOnClickOutside: true,
+    closeOnClickOutside: false,
   },
 )
 const emit = defineEmits(['confirm', 'cancel', 'update:modelValue'])

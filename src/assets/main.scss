@@ -1,9 +1,68 @@
-@import './base.scss';
+@import './common.scss';
+
+body,
+html,
+#app {
+  width: 100%;
+  height: 100%;
+}
 
 #app {
   position: relative;
   overflow: hidden;
   user-select: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #000000;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.themed-input {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+}
+
+.themed-button {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 2px 6px;
+  box-sizing: border-box;
+  transition: all 0.3s;
+  height: 26px;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:not(&:disabled) {
+    &:hover {
+      background: rgba(70, 70, 70, 0.4);
+      transition: none;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  &.blue {
+    background-color: dodgerblue !important;
+  }
+  &.red {
+    background-color: #F44336 !important;
+  }
 }
 
 .panel-blur-bg {
