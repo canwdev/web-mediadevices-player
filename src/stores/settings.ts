@@ -13,6 +13,7 @@ interface ISettings {
   autoHideUI: boolean
   enableKvmInput: boolean
   baudRate: string
+  cursorMode: 'relative' | 'absolute'
 
   filterMirrorX: boolean
   filterMirrorY: boolean
@@ -33,6 +34,7 @@ export const useSettingsStore = defineStore('settingsStore', {
       autoHideUI: true,
       enableKvmInput: false,
       baudRate: '',
+      cursorMode: 'relative',
 
       filterMirrorX: false,
       filterMirrorY: false,

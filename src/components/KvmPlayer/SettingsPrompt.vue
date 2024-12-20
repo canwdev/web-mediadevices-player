@@ -49,6 +49,8 @@ const kvmInputHelp = () => {
       <button class="btn-close btn-no-style" @click="mVisible = !mVisible">×</button>
 
       <div class="settings-content" @contextmenu.prevent>
+        <div class="s-title" style="margin-top: 0">Video</div>
+
         <code v-if="settingsStore.videoConfig">{{
           `${settingsStore.videoConfig.width}x${settingsStore.videoConfig.height} ${parseFloat((settingsStore.videoConfig.frameRate || 0).toFixed(2))}fps`
         }}</code>
@@ -70,25 +72,36 @@ const kvmInputHelp = () => {
           <span>Auto Hide UI</span>
         </label>
 
+        <div class="s-title">KVM Settings</div>
+
         <label class="cursor-pointer">
           <input type="checkbox" v-model="settingsStore.enableKvmInput" />
           <span>Enable KVM Input</span>
           <button @click="kvmInputHelp" class="themed-button">CH9329 ?</button>
         </label>
 
-        <label v-if="settingsStore.enableKvmInput" class="">
-          <span>Baud Rate</span>
-          <input
-            class="themed-input"
-            type="number"
-            step="1"
-            v-model="settingsStore.baudRate"
-            placeholder="9600"
-          />
-        </label>
+        <template v-if="settingsStore.enableKvmInput">
+          <label>
+            <span>Cursor Mode</span>
 
-        <div class="cursor-help" title="Filter will not apply to screenshot/record">
-          CSS Filter:
+            <select style="flex: 1" v-model="settingsStore.cursorMode" class="themed-input">
+              <option v-for="v in ['relative', 'absolute']" :key="v">{{ v }}</option>
+            </select>
+          </label>
+          <label>
+            <span>Baud Rate</span>
+            <input
+              class="themed-input"
+              type="number"
+              step="1"
+              v-model="settingsStore.baudRate"
+              placeholder="9600"
+            />
+          </label>
+        </template>
+
+        <div class="s-title cursor-help" title="Filter will not apply to screenshot/record">
+          CSS Filter
         </div>
 
         <label class="cursor-pointer">
@@ -142,6 +155,9 @@ const kvmInputHelp = () => {
   padding: 10px;
   z-index: 100;
   min-width: 150px;
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
 
   border-radius: 4px;
 
@@ -149,7 +165,7 @@ const kvmInputHelp = () => {
     position: absolute;
     top: 0;
     right: 0;
-    padding: 8px;
+    padding: 2px 4px;
     font-size: 20px;
     line-height: 1;
   }
@@ -159,6 +175,14 @@ const kvmInputHelp = () => {
     flex-direction: column;
     gap: 8px;
     font-size: 14px;
+
+    .s-title {
+      font-weight: bold;
+      margin-top: 10px;
+      padding: 2px 6px;
+      background: linear-gradient(to right, rgba(239, 239, 239, 0.43), transparent);
+      border-radius: 2px;
+    }
 
     label {
       display: flex;

@@ -2,11 +2,11 @@
   font-style: italic;
 }
 
-.font-code {
+.font-code, .font-code * {
   font-family: 'Victor Mono Regular', 'Cascadia Code', '等距更纱黑体 SC', 'Monaco', 'Fira Code Medium', Consolas, 'Courier New', monospace;
 }
 
-.font-emoji {
+.font-emoji, .font-emoji * {
   font-family: "Segoe UI Emoji", "SF Pro SC", "SF Pro Text", "SF Pro Icons", "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
 

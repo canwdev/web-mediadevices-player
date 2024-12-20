@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {onBeforeUnmount, onMounted, ref, shallowRef} from 'vue'
+import {onBeforeUnmount, onMounted, Ref, ref, shallowRef, watch} from 'vue'
 import {createPrompt} from '@/components/PromptInput/prompt-input'
 import {useEventListener, useMouse, usePointerLock} from '@vueuse/core'
 import {ASCII_KEYS} from '@/components/KvmPlayer/utils/keys-enum'
@@ -140,6 +140,7 @@ const handleMouseWheel = async (event: WheelEvent) => {
 // const mouseX = ref(0)
 // const mouseY = ref(0)
 
+// 鼠标锁定，相对鼠标模式
 useEventListener(document, 'pointerlockchange', (event) => {
   if (!document.pointerLockElement) {
     console.log('Exit pointer lock')
@@ -198,6 +199,17 @@ useEventListener(document, 'pointerlockchange', (event) => {
         timer = setTimeout(() => (timer = null), 16)
       }
 })
+
+// 绝对鼠标模式
+watch(
+  () => settingsStore.cursorMode,
+  (mode) => {
+    if (mode === 'relative') {
+      return
+    }
+  },
+  {immediate: true},
+)
 
 const showSendInput = async () => {
   const text = await createPrompt('', 'Send Text', {})
@@ -312,12 +324,18 @@ const handleSendComboKey = async () => {
   selectedComboKey.value = ''
 }
 
-const autoEnable = () => {
+const videoRef = ref()
+const autoEnable = (_videoRef: Ref<HTMLVideoElement>) => {
   if (!serialPort.value) {
     initSerial()
     return
   }
-  lock(rootRef.value)
+  if (!videoRef.value) {
+    videoRef.value = _videoRef
+  }
+  if (settingsStore.cursorMode === 'relative') {
+    lock(rootRef.value)
+  }
 }
 
 defineExpose({
@@ -331,7 +349,7 @@ defineExpose({
   <div ref="rootRef" class="kvm-input flex-row-center-gap" tabindex="-1">
     <button v-if="!serialPort" @click="initSerial" class="themed-button blue">Init Serial</button>
     <template v-else>
-      <button @click="closeSerial" class="themed-button">Close Serial</button>
+      <button @click="closeSerial" class="themed-button red">Close Serial</button>
       <!--<button @click="lock(rootRef)" class="themed-button blue">Capture Mouse</button>-->
 
       <button @click="showSendInput" class="themed-button">Send Text...</button>

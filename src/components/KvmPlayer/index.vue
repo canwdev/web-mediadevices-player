@@ -362,7 +362,7 @@ const enterInputMode = () => {
   if (!kvmInputRef.value) {
     return
   }
-  kvmInputRef.value.autoEnable()
+  kvmInputRef.value.autoEnable(videoRef.value)
 }
 </script>
 
@@ -486,7 +486,7 @@ const enterInputMode = () => {
       <video
         @dblclick.stop="toggleFullScreen"
         ref="videoRef"
-        id="videoId"
+        id="streamVideo"
         autoplay
         playsinline
         :controls="settingsStore.isShowControls"
