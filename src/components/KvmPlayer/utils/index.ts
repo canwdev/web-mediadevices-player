@@ -29,6 +29,7 @@ export class CursorHider {
     this.showHideFn = showHideFn
     this.time = time
     this.showCursor = this.showCursor.bind(this)
+    this.handlePointerLockChange = this.handlePointerLockChange.bind(this)
 
     this.start()
   }
@@ -42,6 +43,11 @@ export class CursorHider {
   }
 
   showCursor() {
+    if (document.pointerLockElement) {
+      // ignore lock
+      return
+    }
+
     if (typeof this.showHideFn === 'function') {
       this.showHideFn({el: this.targetEl, isShow: true})
     } else {
@@ -57,12 +63,22 @@ export class CursorHider {
     }, this.time)
   }
 
+  handlePointerLockChange() {
+    if (!document.pointerLockElement) {
+      // console.log('Exit pointer lock')
+    } else {
+      this.hideCursor()
+    }
+  }
+
   start() {
+    document.addEventListener('pointerlockchange', this.handlePointerLockChange)
     document.addEventListener('mousemove', this.showCursor)
     this.runTimer()
   }
 
   stop() {
+    document.removeEventListener('pointerlockchange', this.handlePointerLockChange)
     document.removeEventListener('mousemove', this.showCursor)
     clearTimeout(this.timeoutID)
     this.showHideFn({el: this.targetEl, isShow: true})
