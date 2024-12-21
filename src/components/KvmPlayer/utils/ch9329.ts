@@ -74,3 +74,68 @@ export const decomposeHexToBytes = (hexNumber: number) => {
 
   return [lowByte, highByte]
 }
+
+export enum MediaKey {
+  EJECT = 'Eject',
+  CD_STOP = 'CD Stop',
+  PREV_TRACK = 'Prev. Track',
+  NEXT_TRACK = 'Next Track',
+  PLAY_PAUSE = 'Play/Pause',
+  MUTE = 'Mute',
+  VOLUME_PLUS = 'Volume-',
+  VOLUME_MINUS = 'Volume+',
+  REFRESH = 'Refresh',
+  STOP = 'Stop',
+  FORWARD = 'Forward',
+  BACK = 'Back',
+  HOME = 'Home',
+  FAVORITES = 'Favorites',
+  SEARCH = 'Search',
+  E_MAIL = 'E-Mail',
+  REWIND = 'Rewind',
+  RECORD = 'Record',
+  MINIMIZE = 'Minimize',
+  MY_COMPUTER = 'My Computer',
+  SCREEN_SAVE = 'Screen Save',
+  CALCULATOR = 'Calculator',
+  EXPLORER = 'Explorer',
+  MEDIA = 'Media',
+}
+
+export const mediaKeyMatrix = [
+  [
+    MediaKey.EJECT,
+    MediaKey.CD_STOP,
+    MediaKey.PREV_TRACK,
+    MediaKey.NEXT_TRACK,
+    MediaKey.PLAY_PAUSE,
+    MediaKey.MUTE,
+    MediaKey.VOLUME_PLUS,
+    MediaKey.VOLUME_MINUS,
+  ],
+  [
+    MediaKey.REFRESH,
+    MediaKey.STOP,
+    MediaKey.FORWARD,
+    MediaKey.BACK,
+    MediaKey.HOME,
+    MediaKey.FAVORITES,
+    MediaKey.SEARCH,
+    MediaKey.E_MAIL,
+  ],
+  [
+    MediaKey.REWIND,
+    MediaKey.RECORD,
+    MediaKey.MINIMIZE,
+    MediaKey.MY_COMPUTER,
+    MediaKey.SCREEN_SAVE,
+    MediaKey.CALCULATOR,
+    MediaKey.EXPLORER,
+    MediaKey.MEDIA,
+  ],
+]
+
+//  arr[1] -> 0b10000000, arr[2] -> 0b01000000, arr[6] -> 0b00000001
+export const indexToBinary = (index: number) => {
+  return 1 << (7 - index) // 7 - index 确保将 1 移到适当的位上
+}

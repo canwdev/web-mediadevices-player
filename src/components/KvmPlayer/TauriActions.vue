@@ -4,28 +4,28 @@ import {window} from '@tauri-apps/api'
 import {uniOpenUrl} from '@/utils'
 
 let curWin = window.getCurrent()
-const isFull = ref(false)
+const isFullscreen = ref(false)
 function toggleFullScreen() {
-  isFull.value = !isFull.value
-  curWin.setFullscreen(isFull.value)
+  isFullscreen.value = !isFullscreen.value
+  curWin.setFullscreen(isFullscreen.value)
 }
 const isTop = ref(false)
 function toggleTop() {
   isTop.value = !isTop.value
   curWin.setAlwaysOnTop(isTop.value)
 }
-
-function goGithub() {
-  uniOpenUrl('https://github.com/canwdev/web-mediadevices-player')
-}
 </script>
 
 <template>
   <button class="themed-button" @click="toggleFullScreen">
-    Fullscreen {{ isFull ? '✕' : '' }}
+    {{ isFullscreen ? '✕ ' : '📺' }} Fullscreen
   </button>
-  <button class="themed-button" @click="toggleTop" title="Pin window top">
+  <button
+    class="themed-button"
+    :class="[isTop ? 'blue' : '']"
+    @click="toggleTop"
+    title="Pin window top"
+  >
     Top {{ isTop ? '📌' : '' }}
   </button>
-  <button class="themed-button" @click="goGithub" title="Github">ℹ️</button>
 </template>
