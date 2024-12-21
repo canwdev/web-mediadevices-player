@@ -4,8 +4,10 @@ import {createPrompt} from '@/components/PromptInput/prompt-input'
 import {useEventListener, useMouse, usePointerLock} from '@vueuse/core'
 import {ASCII_KEYS} from '@/components/KvmPlayer/utils/keys-enum'
 import {useSerialState} from '@/components/KvmPlayer/utils/serial-state'
-import {CmdType, genPacket} from '@/components/KvmPlayer/utils/ch9329'
+import {CmdType, decomposeHexToBytes, genPacket, i8clamp} from '@/components/KvmPlayer/utils/ch9329'
 import {useSettingsStore} from '@/stores/settings'
+
+const emit = defineEmits(['connected', 'disconnected'])
 
 const settingsStore = useSettingsStore()
 const {reader, writer, serialPort} = useSerialState()
@@ -63,6 +65,7 @@ const initSerial = async () => {
     writer.value = port.writable.getWriter()
     serialPort.value = port
     console.log(port)
+    emit('connected', port)
   } catch (error: any) {
     console.error(error)
     window.$notification({
@@ -85,6 +88,8 @@ const closeSerial = () => {
     serialPort.value.close()
     serialPort.value = null
   }
+  releaseAbsoluteMouse()
+  emit('disconnected')
 }
 onBeforeUnmount(() => {
   // closeSerial()
@@ -122,23 +127,19 @@ const {isSupported, lock, unlock, element, triggerElement} = usePointerLock(root
   unadjustedMovement: true,
 })
 
-const handleMouseWheel = async (event: WheelEvent) => {
+const handleRelativeMouseWheel = async (event: WheelEvent) => {
   // event.deltaY 表示滚动距离
   let value
   if (event.deltaY > 0) {
     // console.log('向下滚动', event.deltaY)
-    value = new Uint8Array([...genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, 0, 0, 0, 0xfd)])
+    value = new Uint8Array(genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, 0, 0, 0, 0xfd))
   } else {
     // console.log('向上滚动', event.deltaY)
 
-    value = new Uint8Array([...genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, 0, 0, 0, 0x02)])
+    value = new Uint8Array(genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, 0, 0, 0, 0x02))
   }
   await writeSerial(value)
 }
-
-// const isMousePosInit = ref(false)
-// const mouseX = ref(0)
-// const mouseY = ref(0)
 
 // 鼠标锁定，相对鼠标模式
 useEventListener(document, 'pointerlockchange', (event) => {
@@ -146,30 +147,32 @@ useEventListener(document, 'pointerlockchange', (event) => {
     console.log('Exit pointer lock')
     const el = rootRef.value
     el.onmousemove = el.onmousedown = el.onmouseup = null
-    document.removeEventListener('wheel', handleMouseWheel)
+    document.removeEventListener('wheel', handleRelativeMouseWheel)
 
-    // isMousePosInit.value = false
     return
   }
   console.log('Enter pointer lock', event, document.pointerLockElement)
   const el = rootRef.value
 
-  const i8clamp = (v: number) => Math.max(-0x7f, Math.min(v, 0x7f)) // clamp to int8
   let [pressedBits, x, y] = [0, 0, 0]
   let timer: any = null // a modified throttle strategy
 
-  document.addEventListener('wheel', handleMouseWheel)
+  document.addEventListener('wheel', handleRelativeMouseWheel)
   el.onmousemove =
     el.onmousedown =
     el.onmouseup =
       (event: MouseEvent) => {
-        // if (!isMousePosInit.value) {
-        //   mouseX.value = event.clientX
-        //   mouseY.value = event.clientY
-        //   isMousePosInit.value = true
-        // }
-        // mouseX.value += event.movementX
-        // mouseY.value += event.movementY
+        /*        const pressedBits = event.buttons // so lucky, coincidence or necessity?
+        const x = Math.round(event.movementX)
+        const y = Math.round(event.movementY)
+
+        let [pX, pY] = [i8clamp(x), i8clamp(y)]
+        if (pX < 0) pX = (0xff + pX) & 0xff
+        if (pY < 0) pY = (0xff + pY) & 0xff
+        writeSerial(
+          new Uint8Array(genPacket(CmdType.CMD_SEND_MS_REL_DATA, 0x01, pressedBits, pX, pY, 0)),
+        )*/
+
         x += event.movementX
         y += event.movementY
         if (pressedBits != event.buttons || i8clamp(x) !== x || i8clamp(y) !== y) {
@@ -180,7 +183,7 @@ useEventListener(document, 'pointerlockchange', (event) => {
         if (timer !== null) return
         x = Math.round(x)
         y = Math.round(y)
-        const value = []
+        const value: any = []
         do {
           let [pX, pY] = [i8clamp(x), i8clamp(y)]
           x -= pX
@@ -188,7 +191,7 @@ useEventListener(document, 'pointerlockchange', (event) => {
           if (pX < 0) pX = (0xff + pX) & 0xff
           if (pY < 0) pY = (0xff + pY) & 0xff
           // console.log({pressedBits, pX, pY})
-          value.push(...genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, pressedBits, pX, pY, 0))
+          value.push(...genPacket(CmdType.CMD_SEND_MS_REL_DATA, 0x01, pressedBits, pX, pY, 0))
         } while (
           x !== 0 ||
           y !== 0 // use "do while" loop to send mousedown/mouseup immediately
@@ -201,10 +204,79 @@ useEventListener(document, 'pointerlockchange', (event) => {
 })
 
 // 绝对鼠标模式
+const absMouseRef = ref()
+const releaseAbsoluteMouse = () => {
+  const absEl = absMouseRef.value
+  absMouseRef.value = null
+  if (!absEl) {
+    return
+  }
+  absEl.oncontextmenu = absEl.ondblclick = null
+  absEl.onmousemove = absEl.onmousedown = absEl.onmouseup = null
+  document.removeEventListener('wheel', handleRelativeMouseWheel)
+}
+onBeforeUnmount(() => {
+  releaseAbsoluteMouse()
+})
+const bindAbsoluteMouse = (absEl) => {
+  absMouseRef.value = absEl
+
+  document.addEventListener('wheel', handleRelativeMouseWheel)
+  absEl.oncontextmenu = (e) => e.preventDefault()
+  absEl.ondblclick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  absEl.onmousemove =
+    absEl.onmousedown =
+    absEl.onmouseup =
+      (event: MouseEvent) => {
+        event.preventDefault()
+        event.stopPropagation()
+
+        let pressedBits = event.buttons
+
+        const rect = absEl.getBoundingClientRect()
+        const screenWidth = rect.width
+        const screenHeight = rect.height
+
+        // 计算鼠标相对于元素左上角的坐标
+        const offsetX = event.clientX - rect.left
+        const offsetY = event.clientY - rect.top
+
+        // 计算新的位置
+        const x = Math.floor((offsetX * 4096) / screenWidth)
+        const y = Math.floor((offsetY * 4096) / screenHeight)
+        // console.log({
+        //   event,
+        //   offsetX,
+        //   offsetY,
+        //   screenWidth,
+        //   screenHeight,
+        //   x,
+        //   y,
+        // })
+
+        writeSerial(
+          new Uint8Array(
+            genPacket(
+              CmdType.CMD_SEND_MS_ABS_DATA,
+              0x02,
+              pressedBits,
+              ...decomposeHexToBytes(x),
+              ...decomposeHexToBytes(y),
+              0,
+            ),
+          ),
+        )
+      }
+}
 watch(
   () => settingsStore.cursorMode,
   (mode) => {
     if (mode === 'relative') {
+      releaseAbsoluteMouse()
       return
     }
   },
@@ -324,17 +396,16 @@ const handleSendComboKey = async () => {
   selectedComboKey.value = ''
 }
 
-const videoRef = ref()
-const autoEnable = (_videoRef: Ref<HTMLVideoElement>) => {
+const autoEnable = (el) => {
   if (!serialPort.value) {
     initSerial()
     return
   }
-  if (!videoRef.value) {
-    videoRef.value = _videoRef
-  }
+
   if (settingsStore.cursorMode === 'relative') {
     lock(rootRef.value)
+  } else if (el && !absMouseRef.value) {
+    bindAbsoluteMouse(el)
   }
 }
 
@@ -344,8 +415,6 @@ defineExpose({
 </script>
 
 <template>
-  <!--<div class="mouse-indicator" :style="{top: mouseY + 'px', left: mouseX + 'px'}"></div>-->
-
   <div ref="rootRef" class="kvm-input flex-row-center-gap" tabindex="-1">
     <button v-if="!serialPort" @click="initSerial" class="themed-button blue">Init Serial</button>
     <template v-else>
@@ -363,14 +432,6 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-.mouse-indicator {
-  position: fixed;
-  z-index: 1000;
-  width: 5px;
-  height: 5px;
-  background-color: red;
-  pointer-events: none;
-}
 .kvm-input {
   outline: none;
 }

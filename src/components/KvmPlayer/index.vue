@@ -357,12 +357,13 @@ const videoFilterStyle = computed(() => {
 })
 
 const kvmInputRef = ref()
+const absMouseRef = ref()
 // 进入KVM控制模式
 const enterInputMode = () => {
   if (!kvmInputRef.value) {
     return
   }
-  kvmInputRef.value.autoEnable(videoRef.value)
+  kvmInputRef.value.autoEnable(absMouseRef.value)
 }
 </script>
 
@@ -457,7 +458,7 @@ const enterInputMode = () => {
 
             <template v-if="settingsStore.enableKvmInput">
               <span style="opacity: 0.5">|</span>
-              <KvmInput ref="kvmInputRef" />
+              <KvmInput ref="kvmInputRef" @connected="enterInputMode" />
             </template>
           </template>
         </div>
@@ -482,9 +483,19 @@ const enterInputMode = () => {
       </div>
     </div>
 
-    <div class="video-wrapper">
+    <div class="video-wrapper" @dblclick.stop="toggleFullScreen">
+      <div v-show="settingsStore.cursorMode === 'absolute'" class="abs-mouse-container">
+        <div
+          class="abs-mouse-area"
+          :class="{showBorder: showSettings}"
+          ref="absMouseRef"
+          :style="{
+            width: settingsStore.absMouseAreaWidth + '%',
+            height: settingsStore.absMouseAreaHeight + '%',
+          }"
+        ></div>
+      </div>
       <video
-        @dblclick.stop="toggleFullScreen"
         ref="videoRef"
         id="streamVideo"
         autoplay
@@ -588,12 +599,44 @@ const enterInputMode = () => {
   .video-wrapper {
     flex: 1;
     overflow: hidden;
+    position: relative;
 
     video {
       width: 100%;
       height: 100%;
       /* object-fit: contain; */
       transition: all 1s;
+    }
+    .abs-mouse-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      .abs-mouse-area {
+        width: 100%;
+        height: 100%;
+        &.showBorder {
+          outline: 2px solid #f44336;
+          outline-offset: -2px;
+          &::before {
+            content: 'Abs Mouse Area';
+            background-color: #f44336;
+            color: white;
+            font-size: 12px;
+            font-style: italic;
+            margin: 0;
+            position: absolute;
+            padding: 2px 6px;
+            font-weight: bold;
+          }
+        }
+        cursor: crosshair;
+      }
     }
   }
 

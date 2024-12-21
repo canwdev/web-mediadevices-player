@@ -33,6 +33,7 @@ export enum CmdType {
 }
 
 export const genPacket = (cmd: CmdType, ...data: any[]) => {
+  // console.log(data)
   for (const v of data) if (v < 0 || v > 0xff) throw v
   const ret = [
     // 帧头：占 2 个字节，固定为 0x57、0xAB
@@ -53,4 +54,23 @@ export const genPacket = (cmd: CmdType, ...data: any[]) => {
   for (const v of ret) sum[0] += v
   ret.push(sum[0])
   return ret
+}
+
+// clamp to int8
+export const i8clamp = (v: number) => Math.max(-0x7f, Math.min(v, 0x7f))
+
+// 分解一个十六进制数为低字节和高字节，低字节在前，高字节在后
+export const decomposeHexToBytes = (hexNumber: number) => {
+  // 确保输入是一个有效的十六进制数
+  // if (typeof hexNumber !== 'number' || hexNumber < 0 || hexNumber > 0xFFFF) {
+  //   throw new Error('请输入一个有效的16进制数（0到0xFFFF之间）');
+  // }
+
+  // 获取低字节（最后8位）
+  const lowByte = hexNumber & 0xff
+
+  // 获取高字节（前8位）
+  const highByte = (hexNumber >> 8) & 0xff
+
+  return [lowByte, highByte]
 }
