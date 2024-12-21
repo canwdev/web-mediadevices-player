@@ -9,6 +9,14 @@ export interface IVideoConfig {
 
 interface ISettings {
   isShowControls: boolean
+  fitMode: string
+  autoHideUI: boolean
+  enableKvmInput: boolean
+  baudRate: string
+  cursorMode: 'relative' | 'absolute'
+  absMouseAreaHeight: number
+  absMouseAreaWidth: number
+
   filterMirrorX: boolean
   filterMirrorY: boolean
   filterShowFg: boolean
@@ -24,6 +32,14 @@ export const useSettingsStore = defineStore('settingsStore', {
   state: (): ISettings => {
     return {
       isShowControls: false,
+      fitMode: 'contain',
+      autoHideUI: true,
+      enableKvmInput: false,
+      baudRate: '',
+      cursorMode: 'relative',
+      absMouseAreaHeight: 100,
+      absMouseAreaWidth: 100,
+
       filterMirrorX: false,
       filterMirrorY: false,
       filterShowFg: false,
