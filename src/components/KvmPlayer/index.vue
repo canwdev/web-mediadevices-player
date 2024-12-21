@@ -6,13 +6,16 @@ export default {
 
 <script setup lang="ts">
 import {onMounted, ref, computed, shallowRef, onBeforeUnmount, watch} from 'vue'
-import {useFullscreen, usePermission} from '@vueuse/core'
-import {CursorHider, snapVideoImageDownload} from './utils/index'
+import {useFullscreen, usePermission, useStorage} from '@vueuse/core'
+import {downloadUrl, snapVideoImage} from './utils/index'
 import TauriActions from '@/components/KvmPlayer/TauriActions.vue'
 import {VideoRecorder} from './utils/video-recorder'
 import {type IVideoConfig, useSettingsStore} from '@/stores/settings'
 import SettingsPrompt from '@/components/KvmPlayer/SettingsPrompt.vue'
 import KvmInput from '@/components/KvmPlayer/KvmInput.vue'
+import {CursorHider} from '@/components/KvmPlayer/utils/cursor-hider'
+import moment from 'moment/moment'
+import QRScanner from '@/components/KvmPlayer/QRScanner.vue'
 
 const getEnumerateDevices = async () => {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -332,7 +335,8 @@ const handleStartStreamingCaptureScreen = async () => {
 }
 
 const handleScreenshot = () => {
-  snapVideoImageDownload(videoRef.value)
+  const url = snapVideoImage(videoRef.value)
+  downloadUrl(url, `screenshot_${moment().format('YYYY-MM-DD_HH-mm-ss')}.png`)
 }
 
 let videoRecorder = ref<VideoRecorder | null>(null)
@@ -371,6 +375,8 @@ const enterInputMode = () => {
   }
   kvmInputRef.value.autoEnable(absMouseRef.value)
 }
+
+const isFolded = useStorage('actions_is_folded', false)
 </script>
 
 <template>
@@ -389,93 +395,109 @@ const enterInputMode = () => {
         }"
       >
         <div class="action-bar-side">
-          <label for="videoSelect">
-            <span>Video:</span>
-            <template v-if="permissionCamera === 'granted'">
-              <select
-                class="themed-button"
-                title="Video"
-                id="videoSelect"
-                v-model="settingsStore.currentVideoDeviceId"
-                @change="handleStartStreaming"
-              >
-                <option v-for="item in videoDeviceList" :key="item.deviceId" :value="item.deviceId">
-                  {{ item.label }}
-                </option>
-              </select>
-            </template>
-            <button class="themed-button" v-else @click="initDevices">
-              ⚠️ {{ permissionCamera }}
+          <button class="themed-button" @click="isFolded = !isFolded">
+            {{ isFolded ? '▶️' : '◀️' }}
+          </button>
+          <div v-show="!isFolded" class="flex-row-center-gap">
+            <label for="videoSelect">
+              <span>Video:</span>
+              <template v-if="permissionCamera === 'granted'">
+                <select
+                  class="themed-button"
+                  title="Video"
+                  id="videoSelect"
+                  v-model="settingsStore.currentVideoDeviceId"
+                  @change="handleStartStreaming"
+                >
+                  <option
+                    v-for="item in videoDeviceList"
+                    :key="item.deviceId"
+                    :value="item.deviceId"
+                  >
+                    {{ item.label }}
+                  </option>
+                </select>
+              </template>
+              <button class="themed-button" v-else @click="initDevices">
+                ⚠️ {{ permissionCamera }}
+              </button>
+            </label>
+
+            <label for="audioSelect">
+              <span>Audio:</span>
+              <template v-if="permissionMicrophone === 'granted'">
+                <select
+                  class="themed-button"
+                  name="Audio"
+                  id="audioSelect"
+                  v-model="settingsStore.currentAudioDeviceId"
+                  @change="handleStartStreaming"
+                >
+                  <option
+                    v-for="item in audioDeviceList"
+                    :key="item.deviceId"
+                    :value="item.deviceId"
+                  >
+                    {{ item.label }}
+                  </option>
+                </select>
+              </template>
+              <button class="themed-button" v-else @click="initDevices">
+                ⚠️ {{ permissionMicrophone }}
+              </button>
+            </label>
+
+            <button class="themed-button" @click="stopMediaStreaming" v-if="isStreaming">
+              ⏹Stop
             </button>
-          </label>
+            <button class="themed-button" @click="handleStartStreaming" v-else>▶Start</button>
+            <button class="themed-button" @click="clearSelect">🛑Reset</button>
 
-          <label for="audioSelect">
-            <span>Audio:</span>
-            <template v-if="permissionMicrophone === 'granted'">
-              <select
-                class="themed-button"
-                name="Audio"
-                id="audioSelect"
-                v-model="settingsStore.currentAudioDeviceId"
-                @change="handleStartStreaming"
-              >
-                <option v-for="item in audioDeviceList" :key="item.deviceId" :value="item.deviceId">
-                  {{ item.label }}
-                </option>
-              </select>
-            </template>
-            <button class="themed-button" v-else @click="initDevices">
-              ⚠️ {{ permissionMicrophone }}
-            </button>
-          </label>
-
-          <button class="themed-button" @click="stopMediaStreaming" v-if="isStreaming">
-            ⏹Stop
-          </button>
-          <button class="themed-button" @click="handleStartStreaming" v-else>▶Start</button>
-          <button class="themed-button" @click="clearSelect">🛑Reset</button>
-
-          <span style="opacity: 0.5">|</span>
-          <button
-            class="themed-button"
-            @click="handleStartStreamingCaptureScreen"
-            title="Capture Screen"
-          >
-            🖥️Screen...
-          </button>
-          <button
-            class="themed-button"
-            @click="handleScreenshot"
-            title="Take a photo"
-            :disabled="!isStreaming"
-          >
-            📷Screenshot
-          </button>
-
-          <template v-if="videoRecorder">
+            <span style="opacity: 0.5">|</span>
             <button
               class="themed-button"
-              v-if="Boolean(videoRecorder.mediaRecorder)"
-              @click="videoRecorder.stop()"
-              title="Save record"
-              style="background: #f44336"
+              @click="handleStartStreamingCaptureScreen"
+              title="Capture Screen"
             >
-              📹Save
+              🖥️Screen...
             </button>
+
+            <QRScanner :disabled="!isStreaming" />
+
             <button
-              v-else
               class="themed-button"
-              @click="videoRecorder.start()"
+              @click="handleScreenshot"
+              title="Take a photo"
               :disabled="!isStreaming"
-              title="Record canvas"
             >
-              📹Record...
+              📷Screenshot
             </button>
 
-            <template v-if="settingsStore.enableKvmInput">
-              <span style="opacity: 0.5">|</span>
-              <KvmInput ref="kvmInputRef" @connected="enterInputMode" />
+            <template v-if="videoRecorder">
+              <button
+                class="themed-button"
+                v-if="Boolean(videoRecorder.mediaRecorder)"
+                @click="videoRecorder.stop()"
+                title="Save record"
+                style="background: #f44336"
+              >
+                📹Save
+              </button>
+              <button
+                v-else
+                class="themed-button"
+                @click="videoRecorder.start()"
+                :disabled="!isStreaming"
+                title="Record canvas"
+              >
+                📹Record...
+              </button>
             </template>
+          </div>
+
+          <template v-if="settingsStore.enableKvmInput">
+            <span style="opacity: 0.5">|</span>
+            <KvmInput ref="kvmInputRef" @connected="enterInputMode" />
           </template>
         </div>
 
@@ -484,7 +506,9 @@ const enterInputMode = () => {
             ⚙️
           </button>
           <button v-if="!isTauri" @click="toggleFullScreen" class="themed-button">
-            {{ isFullscreen ? '✕ ' : '📺' }}Fullscreen
+            {{ isFullscreen ? '╳' : '⛶' }}
+            <!--&#x26F6;-->
+            <!-- https://www.compart.com/en/unicode/category/So -->
           </button>
           <TauriActions v-if="isTauri" />
         </div>
@@ -492,7 +516,10 @@ const enterInputMode = () => {
     </div>
 
     <div class="video-wrapper" @dblclick.stop="toggleFullScreen">
-      <div v-show="settingsStore.cursorMode === 'absolute'" class="abs-mouse-container">
+      <div
+        v-show="settingsStore.enableKvmInput && settingsStore.cursorMode === 'absolute'"
+        class="abs-mouse-container"
+      >
         <div
           class="abs-mouse-area"
           :class="{showBorder: showSettings}"

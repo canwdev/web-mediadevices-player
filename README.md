@@ -1,6 +1,6 @@
 # Web MediaDevices Player
 
-用于播放系统【视频/音频】输入设备的网页应用，使用了 [Media Capture and Streams API](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) 技术。
+用于播放【视频/音频】输入设备的网页应用，使用了 [Media Capture and Streams API](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) 技术。
 
 - 网页版：https://canwdev.github.io/web-mediadevices-player/
 - Tauri 打包的客户端：[Releases](https://github.com/canwdev/web-mediadevices-player/releases)
@@ -10,7 +10,13 @@
 - HDMI to USB 采集卡查看
 - Webcam 视频播放，桌面录屏
 - 画面截图，录制为 webm 格式
+- v1.1.5 新增功能
+  - [CH9329](https://one-kvm.mofeng.run/ch9329_hid/) KVM 键鼠控制，参考: [webusbkvm](https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md)
+  - 支持相对鼠标、绝对鼠标、快捷键、ASCII文本发送
+  - 视频画面二维码扫描
 
+![screenshot](screenshot-2.jpg)
+![screenshot](screenshot-3.jpg)
 ![screenshot](screenshot.png)
 
 提示：
@@ -51,7 +57,13 @@ Main purposes:
 - View HDMI to USB capture card
 - Play webcam videos, desktop screen recording
 - Capture screenshots and record in webm format
+- v1.1.5 New features
+  - [CH9329](https://one-kvm.mofeng.run/ch9329_hid/) KVM keyboard and mouse control, ref: [webusbkvm](https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md)
+  - Supports relative mouse, absolute mouse, hotkeys, and ASCII text sending.
+  - Video screen QR code scanning
 
+![screenshot](screenshot-2.jpg)
+![screenshot](screenshot-3.jpg)
 ![screenshot](screenshot.png)
 
 Tips:

@@ -18,7 +18,7 @@ function toggleTop() {
 
 <template>
   <button class="themed-button" @click="toggleFullScreen">
-    {{ isFullscreen ? '✕ ' : '📺' }} Fullscreen
+    {{ isFullscreen ? '╳' : '⛶' }}
   </button>
   <button
     class="themed-button"
@@ -26,6 +26,6 @@ function toggleTop() {
     @click="toggleTop"
     title="Pin window top"
   >
-    Top {{ isTop ? '📌' : '' }}
+    {{ isTop ? '📌' : '🔝' }}
   </button>
 </template>
