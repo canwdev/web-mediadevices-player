@@ -14,6 +14,9 @@ import {
   mediaKeyMatrix,
 } from '@/components/KvmPlayer/utils/ch9329'
 import {useSettingsStore} from '@/stores/settings'
+import {copy, sleep, snapVideoImage} from '@/components/KvmPlayer/utils'
+import QrcodeDecoder from '@/components/KvmPlayer/utils/qrcode-decoder'
+import {eventBus} from '@/utils/event-bus'
 
 const emit = defineEmits(['connected', 'disconnected'])
 
@@ -136,6 +139,7 @@ const sendText = async (text: string | null) => {
     ])
     // console.log({ char, hidCode, shift, value });
     await writeSerial(value)
+    await sleep(2)
   }
 }
 
@@ -358,22 +362,118 @@ const handleKeyup = async (event: KeyboardEvent) => {
 useEventListener(document, 'keydown', handleKeydown)
 useEventListener(document, 'keyup', handleKeyup)
 
+const selectedTransfer = ref('')
+const transferOptions = [
+  {
+    value: '',
+    label: '📜 Transfer',
+  },
+  {
+    value: 'send_text',
+    label: 'Send Text...',
+    action() {
+      showSendInput()
+    },
+  },
+  {
+    value: 'scan_qr',
+    label: 'Scan QR Code',
+    async action() {
+      eventBus.emit('scan_qr')
+    },
+  },
+  {
+    value: 'scan_qr_from_image',
+    label: 'Scan QR Code From Image...',
+    async action() {
+      eventBus.emit('scan_qr_from_image')
+    },
+  },
+]
+const handleTransferSelect = async () => {
+  const item = transferOptions.find((i) => i.value === selectedTransfer.value)
+  if (!item) {
+    return
+  }
+  await item.action()
+
+  selectedTransfer.value = ''
+}
+
 const selectedComboKey = ref('')
 const specialKeyOptions = [
-  {value: '', label: '⌨️ Combo Keys...'},
-  {value: 'ctrl_alt_del', label: 'Ctrl+Alt+Del'},
-  {value: 'alt_f4', label: 'Alt+F4'},
-  {value: 'meta', label: 'Meta'},
-  {value: 'esc', label: 'Esc'},
-  {value: 'ctrl_alt_f1', label: 'Ctrl+Alt+F1'},
-  {value: 'ctrl_alt_f2', label: 'Ctrl+Alt+F2'},
-  {value: 'ctrl_alt_f3', label: 'Ctrl+Alt+F3'},
-  {value: 'ctrl_alt_f4', label: 'Ctrl+Alt+F4'},
-  {value: 'ctrl_alt_f5', label: 'Ctrl+Alt+F5'},
-  {value: 'ctrl_alt_f6', label: 'Ctrl+Alt+F6'},
-  {value: 'ctrl_alt_f7', label: 'Ctrl+Alt+F7'},
-  {value: 'ctrl_alt_f8', label: 'Ctrl+Alt+F8'},
-  {value: 'ctrl_alt_f9', label: 'Ctrl+Alt+F9'},
+  {value: '', label: '⌨️ Combo Keys'},
+  {
+    value: 'ctrl_alt_del',
+    label: 'Ctrl + Alt + Del',
+    values: {
+      key: 'Delete',
+      controlBits: 0b00000101,
+    },
+  },
+  {
+    value: 'alt_f4',
+    label: 'Alt + F4',
+    values: {
+      key: 'F4',
+      controlBits: 0b00000100,
+    },
+  },
+  {
+    value: 'shift_alt',
+    label: 'Shift + Alt',
+    values: {
+      controlBits: 0b00000110,
+    },
+  },
+  {
+    value: 'ctrl_space',
+    label: 'Ctrl + Space',
+    values: {
+      key: ' ',
+      controlBits: 0b00000001,
+    },
+  },
+  {
+    value: 'alt_space',
+    label: 'Alt + Space',
+    values: {
+      key: ' ',
+      controlBits: 0b00000100,
+    },
+  },
+  {
+    value: 'meta',
+    label: 'Meta',
+    values: {
+      controlBits: 0b00001000,
+    },
+  },
+  {
+    value: 'alt_tab',
+    label: 'Meta + Tab',
+    values: {
+      key: 'Tab',
+      controlBits: 0b00001000,
+    },
+  },
+  {
+    value: 'esc',
+    label: 'Esc',
+    values: {
+      key: 'Escape',
+    },
+  },
+  {label: '-----------------', disabled: true},
+  {value: 'ctrl_alt_f1', label: 'Ctrl + Alt + F1'},
+  {value: 'ctrl_alt_f2', label: 'Ctrl + Alt + F2'},
+  {value: 'ctrl_alt_f3', label: 'Ctrl + Alt + F3'},
+  {value: 'ctrl_alt_f4', label: 'Ctrl + Alt + F4'},
+  {value: 'ctrl_alt_f5', label: 'Ctrl + Alt + F5'},
+  {value: 'ctrl_alt_f6', label: 'Ctrl + Alt + F6'},
+  {value: 'ctrl_alt_f7', label: 'Ctrl + Alt + F7'},
+  {value: 'ctrl_alt_f8', label: 'Ctrl + Alt + F8'},
+  {value: 'ctrl_alt_f9', label: 'Ctrl + Alt + F9'},
 ]
 const handleSendComboKey = async () => {
   const value = selectedComboKey.value
@@ -383,35 +483,24 @@ const handleSendComboKey = async () => {
 
   let key: string = ''
   let controlBits
+  let hidCode = 0
 
   if (/^ctrl_alt_f\d+$/.test(value)) {
     key = 'F' + value.slice(10)
     controlBits = 0b00000101
   } else {
-    switch (value) {
-      case 'alt_f4':
-        key = 'F4'
-        controlBits = 0b00000100
-        break
-      case 'meta':
-        key = 'Meta'
-        controlBits = 0b00001000
-        break
-      case 'esc':
-        key = 'Escape'
-        controlBits = 0b00001000
-        break
-      case 'ctrl_alt_del':
-        key = 'Delete'
-        controlBits = 0b00000101
-        break
+    const item = specialKeyOptions.find((i) => i.value === value)
+    if (!item) {
+      return
     }
+    key = item.values?.key || ''
+    controlBits = item.values?.controlBits || 0
   }
-  if (!key) {
-    return
+  if (key) {
+    const [_hidCode] = ASCII_KEYS.get(key)
+    hidCode = _hidCode || 0
   }
 
-  const [hidCode] = ASCII_KEYS.get(key)
   const sv = new Uint8Array([
     ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, controlBits, 0, hidCode, 0, 0, 0, 0, 0),
     ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -519,7 +608,7 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="rootRef" class="kvm-input flex-row-center-gap" tabindex="-1">
+  <div ref="rootRef" class="kvm-input flex-row-center-gap scrollbar-mini" tabindex="-1">
     <button v-if="!serialPort" @click="initSerial" class="themed-button blue">
       🔌 Connect Serial
     </button>
@@ -529,14 +618,23 @@ defineExpose({
       </button>
       <!--<button @click="lock(rootRef)" class="themed-button blue">Capture Mouse</button>-->
 
-      <button @click="showSendInput" class="themed-button">Send Text...</button>
+      <select v-model="selectedTransfer" class="themed-button" @change="handleTransferSelect">
+        <option v-for="item in transferOptions" :key="item.value" :value="item.value">
+          {{ item.label }}
+        </option>
+      </select>
       <select v-model="selectedComboKey" class="themed-button" @change="handleSendComboKey">
-        <option v-for="item in specialKeyOptions" :key="item.value" :value="item.value">
+        <option
+          v-for="item in specialKeyOptions"
+          :key="item.value"
+          :value="item.value"
+          :disabled="item.disabled"
+        >
           {{ item.label }}
         </option>
       </select>
       <select v-model="selectedMediaKey" class="themed-button" @change="handleSendMedialKey">
-        <option :value="''">⌨️ Media Keys...</option>
+        <option :value="''">⌨️ Media Keys</option>
         <optgroup label="ACPI">
           <option v-for="item in mediaKeyACPIOptions" :key="item.value" :value="item.value">
             {{ item.label }}

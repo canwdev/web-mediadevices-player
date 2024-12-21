@@ -1,86 +1,98 @@
-import moment from 'moment/moment'
-
-export function snapVideoImageDownload(video: HTMLVideoElement) {
+export function snapVideoImage(video: HTMLVideoElement) {
   const canvas = document.createElement('canvas')
   canvas.width = video.videoWidth
   canvas.height = video.videoHeight
   canvas.getContext('2d')!.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
 
   // 将 canvas 转换为 png 格式并保存
-  const dataUrl = canvas.toDataURL('image/png')
-  const link = document.createElement('a')
-  link.download = `screenshot_${moment().format('YYYY-MM-DD_HH-mm-ss')}.png`
-  link.href = dataUrl
-  link.click()
+  return canvas.toDataURL('image/png')
 }
 
-type showHideFnType = (arg0: {el: HTMLElement; isShow: boolean}) => void
-
-// 鼠标自动隐藏工具
-export class CursorHider {
-  private timeoutID: any
-  private targetEl: HTMLElement
-  private showHideFn: showHideFnType
-  private time: number
-
-  constructor(cursorSelector: string, showHideFn: showHideFnType, time = 1000) {
-    this.timeoutID = null
-    this.targetEl = document.querySelector(cursorSelector)!
-    this.showHideFn = showHideFn
-    this.time = time
-    this.showCursor = this.showCursor.bind(this)
-    this.handlePointerLockChange = this.handlePointerLockChange.bind(this)
-
-    this.start()
-  }
-
-  hideCursor() {
-    if (typeof this.showHideFn === 'function') {
-      this.showHideFn({el: this.targetEl, isShow: false})
-    } else {
-      this.targetEl.style.cursor = 'none'
-    }
-  }
-
-  showCursor() {
-    if (document.pointerLockElement) {
-      // ignore lock
-      return
-    }
-
-    if (typeof this.showHideFn === 'function') {
-      this.showHideFn({el: this.targetEl, isShow: true})
-    } else {
-      this.targetEl.style.cursor = ''
-    }
-    this.runTimer()
-  }
-
-  runTimer() {
-    clearTimeout(this.timeoutID)
-    this.timeoutID = setTimeout(() => {
-      this.hideCursor()
-    }, this.time)
-  }
-
-  handlePointerLockChange() {
-    if (!document.pointerLockElement) {
-      // console.log('Exit pointer lock')
-    } else {
-      this.hideCursor()
-    }
-  }
-
-  start() {
-    document.addEventListener('pointerlockchange', this.handlePointerLockChange)
-    document.addEventListener('mousemove', this.showCursor)
-    this.runTimer()
-  }
-
-  stop() {
-    document.removeEventListener('pointerlockchange', this.handlePointerLockChange)
-    document.removeEventListener('mousemove', this.showCursor)
-    clearTimeout(this.timeoutID)
-    this.showHideFn({el: this.targetEl, isShow: true})
-  }
+export const downloadUrl = (url: string, filename?) => {
+  // 创建一个虚拟的 <a> 标签
+  const a = document.createElement('a')
+  // 设置 href 为文件的 URL
+  a.href = url
+  // 设置 download 属性，以指定下载时的文件名
+  a.download = filename
+  // 将 <a> 标签添加到 DOM 中
+  document.body.appendChild(a)
+  // 模拟点击 <a> 标签以触发下载
+  a.click()
+  // 点击后移除 <a> 标签
+  document.body.removeChild(a)
 }
+
+/**
+ * 复制字符串到剪贴板操作（兼容新旧接口）
+ * @param text 要复制的文本
+ */
+export const copyToClipboard = (text): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // 如果支持 Clipboard API，就使用它
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          resolve()
+        })
+        .catch((error) => {
+          reject(error)
+        })
+    } else {
+      // 使用 document.execCommand 兼容旧 API
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.display = 'none'
+      document.body.appendChild(textarea)
+      textarea.select()
+
+      try {
+        const success = document.execCommand('copy')
+        if (!success) {
+          throw new Error('Unable to perform copy operation')
+        } else {
+          resolve()
+        }
+      } catch (error) {
+        reject(error)
+      } finally {
+        document.body.removeChild(textarea)
+      }
+    }
+  })
+}
+
+export const copy = async (val, isShowVal = true) => {
+  if (!val) {
+    return
+  }
+  if (typeof val === 'object') {
+    if (isShowVal) {
+      console.info('object', val)
+    }
+    val = JSON.stringify(val, null, 2)
+  }
+  if (isShowVal) {
+    console.info('copy:', val)
+  }
+  await copyToClipboard(val)
+  let showVal = ''
+  if (isShowVal) {
+    if (val.length > 350) {
+      showVal = val.slice(0, 350) + '...'
+    } else {
+      showVal = val
+    }
+  }
+  if (showVal) {
+    showVal = ': ' + showVal
+  }
+  window.$notification({
+    type: 'success',
+    message: `Copied${showVal}`,
+    timeout: 5000,
+  })
+}
+
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
