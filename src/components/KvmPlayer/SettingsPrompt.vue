@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref} from 'vue'
+import {ref, watch} from 'vue'
 import {useVModel} from '@vueuse/core'
 import {useSettingsStore} from '@/stores/settings'
 import {onClickOutside} from '@vueuse/core'
@@ -31,6 +31,16 @@ const rootRef = ref(null)
 onClickOutside(rootRef, (event) => {
   mVisible.value = false
 })
+
+watch(
+  () => settingsStore.cursorMode,
+  (val) => {
+    if (val === 'absolute') {
+      settingsStore.autoHideUI = false
+      settingsStore.fitMode = 'fill'
+    }
+  },
+)
 
 const kvmInputHelp = () => {
   uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
@@ -82,22 +92,48 @@ const kvmInputHelp = () => {
 
         <template v-if="settingsStore.enableKvmInput">
           <label>
+            <span>Baud Rate</span>
+            <select style="flex: 1" v-model="settingsStore.baudRate" class="themed-input">
+              <option
+                v-for="v in [1200, 2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200]"
+                :key="v"
+                :value="v + ''"
+              >
+                {{ v }}
+              </option>
+            </select>
+          </label>
+          <label>
             <span>Cursor Mode</span>
 
             <select style="flex: 1" v-model="settingsStore.cursorMode" class="themed-input">
               <option v-for="v in ['relative', 'absolute']" :key="v">{{ v }}</option>
             </select>
           </label>
-          <label>
-            <span>Baud Rate</span>
-            <input
-              class="themed-input"
-              type="number"
-              step="1"
-              v-model="settingsStore.baudRate"
-              placeholder="9600"
-            />
-          </label>
+
+          <template v-if="settingsStore.cursorMode === 'absolute'">
+            <label>
+              <span>W% H%</span>
+              <input
+                class="themed-input"
+                type="number"
+                step="0.4"
+                v-model="settingsStore.absMouseAreaWidth"
+                :min="0"
+                :max="100"
+                placeholder="Width %"
+              />
+              <input
+                class="themed-input"
+                type="number"
+                step="0.4"
+                v-model="settingsStore.absMouseAreaHeight"
+                :min="0"
+                :max="100"
+                placeholder="Height %"
+              />
+            </label>
+          </template>
         </template>
 
         <div class="s-title cursor-help" title="Filter will not apply to screenshot/record">
@@ -124,6 +160,7 @@ const kvmInputHelp = () => {
           :for="option.label + option.value"
           :key="option.value"
           class="cursor-pointer"
+          style="font-style: italic; font-weight: 500"
           :title="option.value"
           @contextmenu.prevent="settingsStore.inputFilter += ' ' + option.value"
         >
@@ -138,9 +175,13 @@ const kvmInputHelp = () => {
           <span>{{ option.label }}</span>
         </label>
 
-        <label>
+        <label style="font-style: italic; font-weight: 500">
           <span>filter:</span>
-          <input class="themed-input font-code" v-model="settingsStore.inputFilter" />
+          <input
+            class="themed-input font-code"
+            v-model="settingsStore.inputFilter"
+            placeholder="CSS Filter Code"
+          />
         </label>
       </div>
     </div>

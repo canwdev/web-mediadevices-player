@@ -14,6 +14,8 @@ interface ISettings {
   enableKvmInput: boolean
   baudRate: string
   cursorMode: 'relative' | 'absolute'
+  absMouseAreaHeight: number
+  absMouseAreaWidth: number
 
   filterMirrorX: boolean
   filterMirrorY: boolean
@@ -35,6 +37,8 @@ export const useSettingsStore = defineStore('settingsStore', {
       enableKvmInput: false,
       baudRate: '',
       cursorMode: 'relative',
+      absMouseAreaHeight: 100,
+      absMouseAreaWidth: 100,
 
       filterMirrorX: false,
       filterMirrorY: false,
