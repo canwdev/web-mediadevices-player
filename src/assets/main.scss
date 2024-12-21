@@ -58,10 +58,17 @@ body {
   }
 
   &.blue {
-    background-color: dodgerblue !important;
+    background-color: #2196f3 !important;
+  }
+  &.green {
+    background-color: #4caf50 !important;
   }
   &.red {
     background-color: #F44336 !important;
+  }
+  &.yellow {
+    background-color: #ffeb3b !important;
+    color: black !important;
   }
 }
 

@@ -4,7 +4,15 @@ import {createPrompt} from '@/components/PromptInput/prompt-input'
 import {useEventListener, useMouse, usePointerLock} from '@vueuse/core'
 import {ASCII_KEYS} from '@/components/KvmPlayer/utils/keys-enum'
 import {useSerialState} from '@/components/KvmPlayer/utils/serial-state'
-import {CmdType, decomposeHexToBytes, genPacket, i8clamp} from '@/components/KvmPlayer/utils/ch9329'
+import {
+  CmdType,
+  decomposeHexToBytes,
+  genPacket,
+  i8clamp,
+  indexToBinary,
+  MediaKey,
+  mediaKeyMatrix,
+} from '@/components/KvmPlayer/utils/ch9329'
 import {useSettingsStore} from '@/stores/settings'
 
 const emit = defineEmits(['connected', 'disconnected'])
@@ -12,17 +20,6 @@ const emit = defineEmits(['connected', 'disconnected'])
 const settingsStore = useSettingsStore()
 const {reader, writer, serialPort} = useSerialState()
 
-const readSerial = (...args: any) => {
-  if (!reader.value) {
-    window.$notification({
-      type: 'error',
-      message: 'Serial port not initialized',
-      timeout: 3000,
-    })
-    return
-  }
-  return reader.value.read(...args)
-}
 const writeSerial = (...args: any) => {
   if (!writer.value) {
     window.$notification({
@@ -34,6 +31,26 @@ const writeSerial = (...args: any) => {
   }
   // console.log(args)
   return writer.value.write(...args)
+}
+
+// 循环读取串口输出
+async function readLoop(reader) {
+  while (true) {
+    try {
+      // 从串口读取数据
+      const {value, done} = await reader.read()
+      if (done) {
+        // 读取结束
+        console.log('Stream closed')
+        break
+      }
+      // 处理读取的数据
+      console.log(value)
+    } catch (error) {
+      console.error('Read error: ', error)
+      break
+    }
+  }
 }
 
 const initSerial = async () => {
@@ -61,11 +78,13 @@ const initSerial = async () => {
     const opened = port.open({baudRate: +baudRate})
     const timeout = new Promise((resolve, reject) => setTimeout(reject, 900))
     await Promise.race([timeout, opened])
-    reader.value = port.readable.getReader()
-    writer.value = port.writable.getWriter()
+    reader.value = await port.readable.getReader()
+    writer.value = await port.writable.getWriter()
     serialPort.value = port
     console.log(port)
     emit('connected', port)
+
+    // readLoop(reader.value)
   } catch (error: any) {
     console.error(error)
     window.$notification({
@@ -242,12 +261,18 @@ const bindAbsoluteMouse = (absEl) => {
         const screenHeight = rect.height
 
         // 计算鼠标相对于元素左上角的坐标
-        const offsetX = event.clientX - rect.left
-        const offsetY = event.clientY - rect.top
+        let offsetX = event.clientX - rect.left
+        let offsetY = event.clientY - rect.top
+        // if (settingsStore.filterMirrorY) {
+        //   offsetX = rect.width - offsetX
+        // }
+        // if (settingsStore.filterMirrorX) {
+        //   offsetY = rect.height - offsetY
+        // }
 
         // 计算新的位置
-        const x = Math.floor((offsetX * 4096) / screenWidth)
-        const y = Math.floor((offsetY * 4096) / screenHeight)
+        let x = Math.floor((offsetX * 4096) / screenWidth)
+        let y = Math.floor((offsetY * 4096) / screenHeight)
         // console.log({
         //   event,
         //   offsetX,
@@ -334,12 +359,12 @@ useEventListener(document, 'keydown', handleKeydown)
 useEventListener(document, 'keyup', handleKeyup)
 
 const selectedComboKey = ref('')
-const comboKeyOptions = [
-  {value: '', label: 'Send Combo Keys...'},
+const specialKeyOptions = [
+  {value: '', label: '⌨️ Combo Keys...'},
+  {value: 'ctrl_alt_del', label: 'Ctrl+Alt+Del'},
   {value: 'alt_f4', label: 'Alt+F4'},
   {value: 'meta', label: 'Meta'},
   {value: 'esc', label: 'Esc'},
-  {value: 'ctrl_alt_del', label: 'Ctrl+Alt+Del'},
   {value: 'ctrl_alt_f1', label: 'Ctrl+Alt+F1'},
   {value: 'ctrl_alt_f2', label: 'Ctrl+Alt+F2'},
   {value: 'ctrl_alt_f3', label: 'Ctrl+Alt+F3'},
@@ -396,6 +421,85 @@ const handleSendComboKey = async () => {
   selectedComboKey.value = ''
 }
 
+const selectedMediaKey = ref('')
+const mediaKeyACPIOptions = [
+  {value: 0b00000100, label: '🌅 Wake-up'},
+  {value: 0b00000010, label: '💤 Sleep'},
+  {value: 0b00000001, label: '🔌 Power'},
+]
+const mediaKeyCommonGroups = [
+  {
+    label: 'Media Control',
+    children: [
+      {value: MediaKey.PREV_TRACK, label: '🔙 Previous Track'},
+      {value: MediaKey.NEXT_TRACK, label: '🔜 Next Track'},
+      {value: MediaKey.CD_STOP, label: '⏹️ CD Stop'},
+      {value: MediaKey.PLAY_PAUSE, label: '▶️ Play/Pause'},
+      {value: MediaKey.MUTE, label: '🔇 Mute'},
+      {value: MediaKey.VOLUME_PLUS, label: '🔊 Volume Up'},
+      {value: MediaKey.VOLUME_MINUS, label: '🔉 Volume Down'},
+    ],
+  },
+  {
+    label: 'Browser',
+    children: [
+      {value: MediaKey.REFRESH, label: '🔄 Refresh'},
+      {value: MediaKey.STOP, label: '⏹️ Stop'},
+      {value: MediaKey.FORWARD, label: '➡️ Forward'},
+      {value: MediaKey.BACK, label: '⬅️ Back'},
+      {value: MediaKey.HOME, label: '🏠 Home'},
+      {value: MediaKey.SEARCH, label: '🔍 Search'},
+    ],
+  },
+  {
+    label: 'Apps',
+    children: [
+      {value: MediaKey.E_MAIL, label: '📧 E-Mail'},
+      {value: MediaKey.MY_COMPUTER, label: '💻 My Computer'},
+      {value: MediaKey.CALCULATOR, label: '🧮 Calculator'},
+      {value: MediaKey.MEDIA, label: '🎵 Media'},
+    ],
+  },
+]
+const handleSendMedialKey = async () => {
+  const value = selectedMediaKey.value
+  if (!value) {
+    return
+  }
+
+  const acpiItem = mediaKeyACPIOptions.find((i) => i.value === Number(value))
+  if (acpiItem) {
+    // 发送ACPI按键
+    const sv = new Uint8Array([
+      ...genPacket(CmdType.CMD_SEND_KB_MEDIA_DATA, 0x01, value),
+      ...genPacket(CmdType.CMD_SEND_KB_MEDIA_DATA, 0x01, 0),
+    ])
+    await writeSerial(sv)
+    selectedMediaKey.value = ''
+    return
+  }
+
+  // 发送媒体按键
+  const arr = [0, 0, 0]
+  for (let i = 0; i < mediaKeyMatrix.length; i++) {
+    for (let j = 0; j < mediaKeyMatrix[i].length; j++) {
+      const v = mediaKeyMatrix[i][j]
+      if (v === value) {
+        arr[i] = indexToBinary(j)
+        break
+      }
+    }
+  }
+
+  const sv = new Uint8Array([
+    ...genPacket(CmdType.CMD_SEND_KB_MEDIA_DATA, 0x02, ...arr),
+    ...genPacket(CmdType.CMD_SEND_KB_MEDIA_DATA, 0x02, 0, 0, 0),
+  ])
+  await writeSerial(sv)
+
+  selectedMediaKey.value = ''
+}
+
 const autoEnable = (el) => {
   if (!serialPort.value) {
     initSerial()
@@ -416,16 +520,33 @@ defineExpose({
 
 <template>
   <div ref="rootRef" class="kvm-input flex-row-center-gap" tabindex="-1">
-    <button v-if="!serialPort" @click="initSerial" class="themed-button blue">Init Serial</button>
+    <button v-if="!serialPort" @click="initSerial" class="themed-button blue">
+      🔌 Connect Serial
+    </button>
     <template v-else>
-      <button @click="closeSerial" class="themed-button red">Close Serial</button>
+      <button @click="closeSerial" class="themed-button" style="color: #ffcc00; font-weight: bold">
+        Close Serial
+      </button>
       <!--<button @click="lock(rootRef)" class="themed-button blue">Capture Mouse</button>-->
 
       <button @click="showSendInput" class="themed-button">Send Text...</button>
       <select v-model="selectedComboKey" class="themed-button" @change="handleSendComboKey">
-        <option v-for="item in comboKeyOptions" :key="item.value" :value="item.value">
+        <option v-for="item in specialKeyOptions" :key="item.value" :value="item.value">
           {{ item.label }}
         </option>
+      </select>
+      <select v-model="selectedMediaKey" class="themed-button" @change="handleSendMedialKey">
+        <option :value="''">⌨️ Media Keys...</option>
+        <optgroup label="ACPI">
+          <option v-for="item in mediaKeyACPIOptions" :key="item.value" :value="item.value">
+            {{ item.label }}
+          </option>
+        </optgroup>
+        <optgroup v-for="group in mediaKeyCommonGroups" :key="group.label" :label="group.label">
+          <option v-for="item in group.children" :key="item.value" :value="item.value">
+            {{ item.label }}
+          </option>
+        </optgroup>
       </select>
     </template>
   </div>

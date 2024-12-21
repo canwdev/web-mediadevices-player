@@ -3,7 +3,7 @@ import {ref, watch} from 'vue'
 import {useVModel} from '@vueuse/core'
 import {useSettingsStore} from '@/stores/settings'
 import {onClickOutside} from '@vueuse/core'
-import {uniOpenUrl} from '@/utils'
+import {getVersion, uniOpenUrl} from '@/utils'
 
 const settingsStore = useSettingsStore()
 interface Props {
@@ -87,7 +87,7 @@ const kvmInputHelp = () => {
         <label class="cursor-pointer">
           <input type="checkbox" v-model="settingsStore.enableKvmInput" />
           <span>Enable KVM Input</span>
-          <button @click="kvmInputHelp" class="themed-button">CH9329 ?</button>
+          <button @click="kvmInputHelp" class="themed-button">CH340+CH9329 ❓</button>
         </label>
 
         <template v-if="settingsStore.enableKvmInput">
@@ -111,9 +111,9 @@ const kvmInputHelp = () => {
             </select>
           </label>
 
-          <template v-if="settingsStore.cursorMode === 'absolute'">
+          <div class="flex-row-center-gap" v-if="settingsStore.cursorMode === 'absolute'">
             <label>
-              <span>W% H%</span>
+              W:
               <input
                 class="themed-input"
                 type="number"
@@ -122,7 +122,10 @@ const kvmInputHelp = () => {
                 :min="0"
                 :max="100"
                 placeholder="Width %"
-              />
+              />%
+            </label>
+            <label>
+              H:
               <input
                 class="themed-input"
                 type="number"
@@ -131,9 +134,9 @@ const kvmInputHelp = () => {
                 :min="0"
                 :max="100"
                 placeholder="Height %"
-              />
+              />%
             </label>
-          </template>
+          </div>
         </template>
 
         <div class="s-title cursor-help" title="Filter will not apply to screenshot/record">
@@ -182,6 +185,23 @@ const kvmInputHelp = () => {
             v-model="settingsStore.inputFilter"
             placeholder="CSS Filter Code"
           />
+        </label>
+
+        <div class="s-title">About</div>
+
+        <label>
+          <span>Version:</span>
+          {{ getVersion() }}
+        </label>
+
+        <label>
+          <span>Author: Canwdev</span>
+          <button
+            class="themed-button green"
+            @click="uniOpenUrl('https://github.com/canwdev/web-mediadevices-player')"
+          >
+            Github
+          </button>
         </label>
       </div>
     </div>

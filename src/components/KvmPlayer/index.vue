@@ -6,7 +6,7 @@ export default {
 
 <script setup lang="ts">
 import {onMounted, ref, computed, shallowRef, onBeforeUnmount, watch} from 'vue'
-import {useFullscreen} from '@vueuse/core'
+import {useFullscreen, usePermission} from '@vueuse/core'
 import {CursorHider, snapVideoImageDownload} from './utils/index'
 import TauriActions from '@/components/KvmPlayer/TauriActions.vue'
 import {VideoRecorder} from './utils/video-recorder'
@@ -31,7 +31,7 @@ const getEnumerateDevices = async () => {
 
 const settingsStore = useSettingsStore()
 
-const isLoading = ref(false)
+const loadingText = ref('')
 const isTauri = ref(!!window.__TAURI__)
 const deviceList = ref<MediaDeviceInfo[]>([])
 const videoRef = ref()
@@ -55,7 +55,7 @@ const audioDeviceList = computed(() => {
 
 const updateDeviceList = async () => {
   try {
-    isLoading.value = true
+    loadingText.value = 'Updating Device List...'
     // console.log('updateDeviceList1')
     deviceList.value = await getEnumerateDevices()
     // console.log('updateDeviceList2')
@@ -67,7 +67,7 @@ const updateDeviceList = async () => {
       timeout: 5000,
     })
   } finally {
-    isLoading.value = false
+    loadingText.value = ''
   }
 }
 
@@ -96,27 +96,12 @@ watch(
   },
 )
 
-onMounted(async () => {
-  mouseHider.value = new CursorHider(
-    '#app',
-    ({el, isShow}) => {
-      const actionBarEl = actionBarRef.value
-      if (!isShow) {
-        el.style.cursor = 'none'
-        actionBarEl.classList.remove('visible')
-      } else {
-        el.style.cursor = ''
-        actionBarEl.classList.add('visible')
-      }
-    },
-    3000,
-  )
-  if (!settingsStore.autoHideUI) {
-    mouseHider.value.stop()
-  }
+const permissionCamera = usePermission('camera')
+const permissionMicrophone = usePermission('microphone')
 
+const initDevices = async () => {
   try {
-    isLoading.value = true
+    loadingText.value = 'Initializing devices...'
     if (settingsStore.currentVideoDeviceId || settingsStore.currentAudioDeviceId) {
       await startMediaStream()
       await updateDeviceList()
@@ -149,7 +134,28 @@ onMounted(async () => {
       timeout: 5000,
     })
   } finally {
-    isLoading.value = false
+    loadingText.value = ''
+  }
+}
+
+onMounted(async () => {
+  await initDevices()
+  mouseHider.value = new CursorHider(
+    '#app',
+    ({el, isShow}) => {
+      const actionBarEl = actionBarRef.value
+      if (!isShow) {
+        el.style.cursor = 'none'
+        actionBarEl.classList.remove('visible')
+      } else {
+        el.style.cursor = ''
+        actionBarEl.classList.add('visible')
+      }
+    },
+    3000,
+  )
+  if (!settingsStore.autoHideUI) {
+    mouseHider.value.stop()
   }
 })
 
@@ -166,7 +172,7 @@ onBeforeUnmount(() => {
  */
 const startMediaStream = async () => {
   try {
-    isLoading.value = true
+    loadingText.value = 'Starting MediaStream...'
 
     const videoId = settingsStore.currentVideoDeviceId
     const audioId = settingsStore.currentAudioDeviceId
@@ -246,7 +252,7 @@ const startMediaStream = async () => {
       timeout: 5000,
     })
   } finally {
-    isLoading.value = false
+    loadingText.value = ''
   }
 }
 
@@ -297,7 +303,7 @@ const {toggle: toggleFullScreen, isFullscreen} = useFullscreen(rootRef)
  */
 const handleStartStreamingCaptureScreen = async () => {
   try {
-    isLoading.value = true
+    loadingText.value = 'Starting Capture Screen...'
     clearSelect()
     stopMediaStreaming()
     const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -321,7 +327,7 @@ const handleStartStreamingCaptureScreen = async () => {
       timeout: 5000,
     })
   } finally {
-    isLoading.value = false
+    loadingText.value = ''
   }
 }
 
@@ -370,7 +376,7 @@ const enterInputMode = () => {
 <template>
   <div ref="rootRef" class="web-mediadevices-player" @click="enterInputMode">
     <transition name="fade">
-      <div class="loading-layer" v-if="isLoading">Connecting Devices...</div>
+      <div class="loading-layer" v-if="loadingText">⌛ {{ loadingText }}</div>
     </transition>
     <div @click.stop :class="{absolute: settingsStore.autoHideUI}" class="action-bar-wrap">
       <div
@@ -385,32 +391,42 @@ const enterInputMode = () => {
         <div class="action-bar-side">
           <label for="videoSelect">
             <span>Video:</span>
-            <select
-              class="themed-button"
-              title="Video"
-              id="videoSelect"
-              v-model="settingsStore.currentVideoDeviceId"
-              @change="handleStartStreaming"
-            >
-              <option v-for="item in videoDeviceList" :key="item.deviceId" :value="item.deviceId">
-                {{ item.label }}
-              </option>
-            </select>
+            <template v-if="permissionCamera === 'granted'">
+              <select
+                class="themed-button"
+                title="Video"
+                id="videoSelect"
+                v-model="settingsStore.currentVideoDeviceId"
+                @change="handleStartStreaming"
+              >
+                <option v-for="item in videoDeviceList" :key="item.deviceId" :value="item.deviceId">
+                  {{ item.label }}
+                </option>
+              </select>
+            </template>
+            <button class="themed-button" v-else @click="initDevices">
+              ⚠️ {{ permissionCamera }}
+            </button>
           </label>
 
           <label for="audioSelect">
             <span>Audio:</span>
-            <select
-              class="themed-button"
-              name="Audio"
-              id="audioSelect"
-              v-model="settingsStore.currentAudioDeviceId"
-              @change="handleStartStreaming"
-            >
-              <option v-for="item in audioDeviceList" :key="item.deviceId" :value="item.deviceId">
-                {{ item.label }}
-              </option>
-            </select>
+            <template v-if="permissionMicrophone === 'granted'">
+              <select
+                class="themed-button"
+                name="Audio"
+                id="audioSelect"
+                v-model="settingsStore.currentAudioDeviceId"
+                @change="handleStartStreaming"
+              >
+                <option v-for="item in audioDeviceList" :key="item.deviceId" :value="item.deviceId">
+                  {{ item.label }}
+                </option>
+              </select>
+            </template>
+            <button class="themed-button" v-else @click="initDevices">
+              ⚠️ {{ permissionMicrophone }}
+            </button>
           </label>
 
           <button class="themed-button" @click="stopMediaStreaming" v-if="isStreaming">
@@ -471,14 +487,6 @@ const enterInputMode = () => {
             {{ isFullscreen ? '✕ ' : '📺' }}Fullscreen
           </button>
           <TauriActions v-if="isTauri" />
-          <a
-            v-else
-            href="https://github.com/canwdev/web-mediadevices-player"
-            target="_blank"
-            title="Github"
-          >
-            ℹ️
-          </a>
         </div>
       </div>
     </div>
