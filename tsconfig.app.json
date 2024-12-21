@@ -5,7 +5,9 @@
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-
+    "noImplicitAny": false,
+    "verbatimModuleSyntax": false,
+    
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]

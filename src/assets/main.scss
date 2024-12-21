@@ -1,3 +1,4 @@
+@import './common.scss';
 
 body,
 html,
@@ -6,39 +7,21 @@ html,
   height: 100%;
 }
 
+#app {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   background-color: #000000;
   color: white;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-}
-
-.font-code {
-  font-family: 'Operator Mono', 'Source Code Pro', Menlo, Monaco, Consolas, 'Courier New', monospace;
-}
-
-.font-emoji, .font-emoji * {
-  font-family: "Segoe UI Emoji", "SF Pro SC", "SF Pro Text", "SF Pro Icons", "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-}
-
-
-.btn-no-style {
-  background: none;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  color: inherit;
-  padding: 0;
-  text-decoration: none;
-
-  &:active {
-    opacity: 0.8;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
 }
 
 .themed-input {
@@ -55,7 +38,7 @@ body {
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 4px;
-  padding: 2px 4px;
+  padding: 2px 6px;
   box-sizing: border-box;
   transition: all 0.3s;
   height: 26px;
@@ -73,11 +56,34 @@ body {
     opacity: 0.7;
     cursor: not-allowed;
   }
+
+  &.blue {
+    background-color: #2196f3 !important;
+  }
+  &.green {
+    background-color: #4caf50 !important;
+  }
+  &.red {
+    background-color: #F44336 !important;
+  }
+  &.yellow {
+    background-color: #ffeb3b !important;
+    color: black !important;
+  }
 }
 
-.cursor-pointer {
-  cursor: pointer;
-}
-.cursor-help {
-  cursor: help;
+.panel-blur-bg {
+  backdrop-filter: blur(10px);
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  color: white;
+
+
+  &._light {
+    background-color: rgba(250, 250, 250, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    color: black;
+  }
 }
