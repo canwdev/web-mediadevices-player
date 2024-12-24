@@ -16,6 +16,7 @@ import KvmInput from '@/components/KvmPlayer/KvmInput.vue'
 import {CursorHider} from '@/components/KvmPlayer/utils/cursor-hider'
 import moment from 'moment/moment'
 import QRScanner from '@/components/KvmPlayer/QRScanner.vue'
+import {useActionBar} from '@/components/KvmPlayer/hooks/use-action-bar'
 
 const getEnumerateDevices = async () => {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -82,22 +83,9 @@ const listenDeviceChange = () => {
   }
 }
 
-const mouseHider = shallowRef()
-const actionBarRef = shallowRef()
 const rootRef = shallowRef()
 
-watch(
-  () => settingsStore.autoHideUI,
-  (val) => {
-    if (mouseHider.value) {
-      if (val) {
-        mouseHider.value.start()
-      } else {
-        mouseHider.value.stop()
-      }
-    }
-  },
-)
+const {actionBarRef, isShowFloatBar} = useActionBar()
 
 const permissionCamera = usePermission('camera')
 const permissionMicrophone = usePermission('microphone')
@@ -143,30 +131,16 @@ const initDevices = async () => {
 
 onMounted(async () => {
   await initDevices()
-  mouseHider.value = new CursorHider(
-    '#app',
-    ({el, isShow}) => {
-      const actionBarEl = actionBarRef.value
-      if (!isShow) {
-        el.style.cursor = 'none'
-        actionBarEl.classList.remove('visible')
-      } else {
-        el.style.cursor = ''
-        actionBarEl.classList.add('visible')
-      }
-    },
-    3000,
-  )
-  if (!settingsStore.autoHideUI) {
-    mouseHider.value.stop()
-  }
 })
 
 onBeforeUnmount(() => {
-  if (mouseHider.value) {
-    mouseHider.value.stop()
-  }
   stopMediaStreaming()
+})
+
+const graphInfo = ref({
+  width: 1,
+  height: 1,
+  aspectRatio: 1,
 })
 
 /**
@@ -242,10 +216,17 @@ const startMediaStream = async () => {
     const stream = await navigator.mediaDevices.getUserMedia(constraints)
     mediaStreamRef.value = stream
     console.log('stream', stream)
+
     const video = videoRef.value
     video.srcObject = stream
     video.onloadedmetadata = () => {
       video.play()
+      console.warn(video, video.videoWidth, video.videoHeight)
+      graphInfo.value = {
+        width: video.videoWidth,
+        height: video.videoHeight,
+        aspectRatio: video.videoWidth / video.videoHeight,
+      }
     }
   } catch (error: any) {
     console.error(error)
@@ -376,7 +357,7 @@ const enterInputMode = () => {
   kvmInputRef.value.autoEnable(absMouseRef.value)
 }
 
-const isFolded = useStorage('actions_is_folded', false)
+const isFolded = useStorage('wmd__actions_is_folded', false)
 </script>
 
 <template>
@@ -384,19 +365,27 @@ const isFolded = useStorage('actions_is_folded', false)
     <transition name="fade">
       <div class="loading-layer" v-if="loadingText">⌛ {{ loadingText }}</div>
     </transition>
-    <div @click.stop :class="{absolute: settingsStore.autoHideUI}" class="action-bar-wrap">
+    <div @click.stop :class="[settingsStore.floatUI ? 'float-ui' : null]" class="action-bar-wrap">
+      <button
+        v-if="settingsStore.floatUI && settingsStore.enableKvmInput"
+        class="themed-button btn-action-bar-drag"
+        @click.stop="isShowFloatBar = !isShowFloatBar"
+      >
+        ⌘
+      </button>
       <div
         ref="actionBarRef"
         class="action-bar font-emoji"
-        :class="{
-          visible:
-            !settingsStore.autoHideUI ||
-            (!settingsStore.currentVideoDeviceId && !settingsStore.currentAudioDeviceId),
-        }"
+        :class="[
+          settingsStore.floatUI && 'panel-blur-bg float-bar',
+          {
+            visible: (isShowFloatBar && settingsStore.floatUI) || !settingsStore.floatUI,
+          },
+        ]"
       >
         <div class="action-bar-side">
-          <button class="themed-button" @click="isFolded = !isFolded">
-            {{ isFolded ? '▶️' : '◀️' }}
+          <button class="btn-no-style" @click="isFolded = !isFolded">
+            {{ !isFolded ? '▶️' : '◀️' }}
           </button>
           <div v-show="!isFolded" class="flex-row-center-gap">
             <label for="videoSelect">
@@ -506,8 +495,9 @@ const isFolded = useStorage('actions_is_folded', false)
             ⚙️
           </button>
           <button v-if="!isTauri" @click="toggleFullScreen" class="themed-button">
-            {{ isFullscreen ? '╳' : '⛶' }}
+            {{ isFullscreen ? '🗔' : '⛶' }}
             <!--&#x26F6;-->
+            <!--╳-->
             <!-- https://www.compart.com/en/unicode/category/So -->
           </button>
           <TauriActions v-if="isTauri" />
@@ -515,29 +505,39 @@ const isFolded = useStorage('actions_is_folded', false)
       </div>
     </div>
 
-    <div class="video-wrapper" @dblclick.stop="toggleFullScreen">
+    <div class="main-graph-wrapper">
       <div
-        v-show="settingsStore.enableKvmInput && settingsStore.cursorMode === 'absolute'"
-        class="abs-mouse-container"
+        class="video-wrapper"
+        @dblclick.stop="toggleFullScreen"
+        :style="
+          settingsStore.fitMode === 'contain'
+            ? {aspectRatio: graphInfo.aspectRatio}
+            : {width: '100%', height: '100%'}
+        "
       >
         <div
-          class="abs-mouse-area"
-          :class="{showBorder: showSettings}"
-          ref="absMouseRef"
-          :style="{
-            width: settingsStore.absMouseAreaWidth + '%',
-            height: settingsStore.absMouseAreaHeight + '%',
-          }"
-        ></div>
+          v-show="settingsStore.enableKvmInput && settingsStore.cursorMode === 'absolute'"
+          class="abs-mouse-container"
+        >
+          <div
+            class="abs-mouse-area"
+            :class="{showBorder: showSettings}"
+            ref="absMouseRef"
+            :style="{
+              width: settingsStore.absMouseAreaWidth + '%',
+              height: settingsStore.absMouseAreaHeight + '%',
+            }"
+          ></div>
+        </div>
+        <video
+          ref="videoRef"
+          id="streamVideo"
+          autoplay
+          playsinline
+          :controls="settingsStore.isShowControls"
+          :style="videoFilterStyle"
+        ></video>
       </div>
-      <video
-        ref="videoRef"
-        id="streamVideo"
-        autoplay
-        playsinline
-        :controls="settingsStore.isShowControls"
-        :style="videoFilterStyle"
-      ></video>
     </div>
 
     <div class="video-fg-layer" v-if="settingsStore.filterShowFg"></div>
@@ -559,6 +559,24 @@ const isFolded = useStorage('actions_is_folded', false)
   .action-bar-wrap {
     z-index: 10;
     user-select: none;
+    pointer-events: none;
+
+    .btn-action-bar-drag {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      height: 18px;
+      z-index: 100;
+      pointer-events: auto;
+    }
+    &.float-ui {
+      position: absolute;
+      left: 0;
+      right: 0;
+      padding-top: 18px;
+    }
 
     .action-bar {
       height: 100%;
@@ -566,10 +584,27 @@ const isFolded = useStorage('actions_is_folded', false)
       background: linear-gradient(180deg, rgba(0, 0, 0, 0.53), transparent);
       visibility: hidden;
       opacity: 0;
-      transition: all 0.3s;
+      transition: opacity 0.3s;
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
+      gap: 8px;
+      pointer-events: auto;
+
+      &.float-bar {
+        width: fit-content;
+        border-radius: 4px;
+        padding: 4px 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 1000px;
+        height: auto;
+
+        .flex-row-center-gap {
+          gap: 4px;
+        }
+      }
 
       &.visible {
         visibility: visible;
@@ -605,11 +640,12 @@ const isFolded = useStorage('actions_is_folded', false)
       .action-bar-side {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         flex-wrap: wrap;
 
         &.right {
           justify-content: flex-end;
+          flex-wrap: nowrap;
         }
 
         label {
@@ -619,27 +655,24 @@ const isFolded = useStorage('actions_is_folded', false)
         }
       }
     }
+  }
 
-    &.absolute {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 70px;
-      .action-bar {
-        padding: 10px;
-      }
-    }
+  .main-graph-wrapper {
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .video-wrapper {
-    flex: 1;
-    overflow: hidden;
+    max-width: 100%;
+    max-height: 100%;
     position: relative;
 
     video {
       width: 100%;
       height: 100%;
-      /* object-fit: contain; */
       transition: all 1s;
     }
     .abs-mouse-container {
@@ -670,6 +703,14 @@ const isFolded = useStorage('actions_is_folded', false)
             font-weight: bold;
           }
         }
+        //cursor:
+        //  url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="%23000" stroke-width="0.25"><circle cx="12" cy="12" r="8.5"></circle><path d="M1 12h5M18 12h5M12 6V1.04M12 23v-4.96M11.95 11.95h.1v.1h-.1z"></path></g></svg>')
+        //    12 12,
+        //  crosshair;
+        //cursor:
+        //  url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="%23FFF" stroke="%23000" stroke-width="2"></circle></svg>')
+        //    3 3,
+        //  crosshair;
         cursor: crosshair;
       }
     }

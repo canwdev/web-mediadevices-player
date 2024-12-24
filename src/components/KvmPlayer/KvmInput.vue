@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {onBeforeUnmount, onMounted, Ref, ref, shallowRef, watch} from 'vue'
 import {createPrompt} from '@/components/PromptInput/prompt-input'
-import {useEventListener, useMouse, usePointerLock} from '@vueuse/core'
+import {useEventListener, useMouse, usePointerLock, useThrottleFn} from '@vueuse/core'
 import {ASCII_KEYS} from '@/components/KvmPlayer/utils/keys-enum'
 import {useSerialState} from '@/components/KvmPlayer/utils/serial-state'
 import {
@@ -251,6 +251,25 @@ const bindAbsoluteMouse = (absEl) => {
     e.stopPropagation()
   }
 
+  const writeSerialThrottled = useThrottleFn(
+    ({pressedBits, x, y}) => {
+      writeSerial(
+        new Uint8Array(
+          genPacket(
+            CmdType.CMD_SEND_MS_ABS_DATA,
+            0x02,
+            pressedBits,
+            ...decomposeHexToBytes(x),
+            ...decomposeHexToBytes(y),
+            0,
+          ),
+        ),
+      )
+    },
+    16,
+    true,
+  )
+
   absEl.onmousemove =
     absEl.onmousedown =
     absEl.onmouseup =
@@ -260,6 +279,7 @@ const bindAbsoluteMouse = (absEl) => {
 
         let pressedBits = event.buttons
 
+        // TODO: optimize,
         const rect = absEl.getBoundingClientRect()
         const screenWidth = rect.width
         const screenHeight = rect.height
@@ -287,18 +307,12 @@ const bindAbsoluteMouse = (absEl) => {
         //   y,
         // })
 
-        writeSerial(
-          new Uint8Array(
-            genPacket(
-              CmdType.CMD_SEND_MS_ABS_DATA,
-              0x02,
-              pressedBits,
-              ...decomposeHexToBytes(x),
-              ...decomposeHexToBytes(y),
-              0,
-            ),
-          ),
-        )
+        // 9600 波特率，打开浏览器控制台后鼠标移动会很慢，需要节流
+        writeSerialThrottled({
+          pressedBits,
+          x,
+          y,
+        })
       }
 }
 watch(
