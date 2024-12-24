@@ -15,6 +15,7 @@
     "build:tauri": "tauri build"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "@tauri-apps/api": "^1.5.3",
     "@vueuse/core": "^10.10.0",
     "jsqr": "^1.4.0",

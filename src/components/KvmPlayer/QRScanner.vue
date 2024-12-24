@@ -116,12 +116,20 @@ onBeforeUnmount(() => {
 
 <template>
   <button
-    class="btn-qr-scanner themed-button"
+    class="btn-qr-scanner btn-no-style"
     title="QR Code Scanner, right click upload image to decode"
-    :class="{blue: isLoading}"
+    :class="{active: isLoading}"
     @click="startScan"
     @contextmenu.prevent="startScanUploadImage"
   >
-    {{ isLoading ? 'Scanning...' : 'QR' }}
+    <span class="mdi mdi-qrcode-scan"></span>
   </button>
 </template>
+
+<style lang="scss" scoped>
+.btn-qr-scanner {
+  &.active {
+    color: #f44336;
+  }
+}
+</style>

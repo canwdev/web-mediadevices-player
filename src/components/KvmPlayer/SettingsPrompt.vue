@@ -32,15 +32,6 @@ onClickOutside(rootRef, (event) => {
   mVisible.value = false
 })
 
-watch(
-  () => settingsStore.cursorMode,
-  (val) => {
-    if (val === 'absolute') {
-      settingsStore.floatUI = false
-    }
-  },
-)
-
 const kvmInputHelp = () => {
   uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
 }
@@ -210,16 +201,20 @@ const kvmInputHelp = () => {
 <style scoped lang="scss">
 .settings-prompt {
   position: fixed;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  left: 50%;
   padding: 10px;
   z-index: 100;
   min-width: 150px;
   max-height: 90vh;
   overflow-y: auto;
   scrollbar-width: thin;
-
   border-radius: 4px;
+
+  @media screen and (max-width: 500px) {
+    left: unset;
+    right: 0;
+  }
 
   .btn-close {
     position: absolute;
