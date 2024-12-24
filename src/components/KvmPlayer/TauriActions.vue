@@ -17,12 +17,13 @@ function toggleTop() {
 </script>
 
 <template>
-  <button class="themed-button" @click="toggleFullScreen">
-    {{ isFullscreen ? '╳' : '⛶' }}
+  <button class="btn-no-style" @click="toggleFullScreen">
+    <span v-if="!isFullscreen" class="mdi mdi-fullscreen"></span>
+    <span v-else class="mdi mdi-fullscreen-exit"></span>
   </button>
   <button
-    class="themed-button"
-    :class="[isTop ? 'blue' : '']"
+    class="btn-no-style"
+    :class="[isTop ? 'active' : '']"
     @click="toggleTop"
     title="Pin window top"
   >
