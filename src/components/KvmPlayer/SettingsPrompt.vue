@@ -36,8 +36,7 @@ watch(
   () => settingsStore.cursorMode,
   (val) => {
     if (val === 'absolute') {
-      settingsStore.autoHideUI = false
-      settingsStore.fitMode = 'fill'
+      settingsStore.floatUI = false
     }
   },
 )
@@ -78,8 +77,8 @@ const kvmInputHelp = () => {
         </label>
 
         <label class="cursor-pointer">
-          <input type="checkbox" v-model="settingsStore.autoHideUI" />
-          <span>Auto Hide UI</span>
+          <input type="checkbox" v-model="settingsStore.floatUI" />
+          <span>Float UI</span>
         </label>
 
         <div class="s-title">KVM Settings</div>

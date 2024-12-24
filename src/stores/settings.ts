@@ -10,7 +10,7 @@ export interface IVideoConfig {
 interface ISettings {
   isShowControls: boolean
   fitMode: string
-  autoHideUI: boolean
+  floatUI: boolean
   enableKvmInput: boolean
   baudRate: string
   cursorMode: 'relative' | 'absolute'
@@ -33,7 +33,7 @@ export const useSettingsStore = defineStore('settingsStore', {
     return {
       isShowControls: false,
       fitMode: 'contain',
-      autoHideUI: true,
+      floatUI: true,
       enableKvmInput: false,
       baudRate: '',
       cursorMode: 'relative',
