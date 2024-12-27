@@ -32,23 +32,13 @@ onClickOutside(rootRef, (event) => {
   mVisible.value = false
 })
 
-watch(
-  () => settingsStore.cursorMode,
-  (val) => {
-    if (val === 'absolute') {
-      settingsStore.autoHideUI = false
-      settingsStore.fitMode = 'fill'
-    }
-  },
-)
-
 const kvmInputHelp = () => {
   uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
 }
 </script>
 
 <template>
-  <transition name="fade">
+  <transition name="fade-scale">
     <div
       ref="rootRef"
       v-if="mVisible"
@@ -72,14 +62,14 @@ const kvmInputHelp = () => {
           </select>
         </label>
 
-        <label title="Toggle video element controls" class="cursor-pointer">
-          <input type="checkbox" v-model="settingsStore.isShowControls" />
-          <span>Video Controls UI</span>
-        </label>
+        <!--<label title="Toggle video element controls" class="cursor-pointer">-->
+        <!--  <input type="checkbox" v-model="settingsStore.isShowControls" />-->
+        <!--  <span>Video Controls UI</span>-->
+        <!--</label>-->
 
         <label class="cursor-pointer">
-          <input type="checkbox" v-model="settingsStore.autoHideUI" />
-          <span>Auto Hide UI</span>
+          <input type="checkbox" v-model="settingsStore.floatUI" />
+          <span>Float UI</span>
         </label>
 
         <div class="s-title">KVM Settings</div>
@@ -211,16 +201,20 @@ const kvmInputHelp = () => {
 <style scoped lang="scss">
 .settings-prompt {
   position: fixed;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  left: 50%;
   padding: 10px;
   z-index: 100;
   min-width: 150px;
   max-height: 90vh;
   overflow-y: auto;
   scrollbar-width: thin;
-
   border-radius: 4px;
+
+  @media screen and (max-width: 500px) {
+    left: unset;
+    right: 0;
+  }
 
   .btn-close {
     position: absolute;

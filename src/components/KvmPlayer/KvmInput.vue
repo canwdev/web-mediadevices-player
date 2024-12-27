@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {onBeforeUnmount, onMounted, Ref, ref, shallowRef, watch} from 'vue'
 import {createPrompt} from '@/components/PromptInput/prompt-input'
-import {useEventListener, useMouse, usePointerLock} from '@vueuse/core'
+import {useEventListener, usePointerLock, useThrottleFn, useWindowFocus} from '@vueuse/core'
 import {ASCII_KEYS} from '@/components/KvmPlayer/utils/keys-enum'
 import {useSerialState} from '@/components/KvmPlayer/utils/serial-state'
 import {
@@ -14,8 +14,7 @@ import {
   mediaKeyMatrix,
 } from '@/components/KvmPlayer/utils/ch9329'
 import {useSettingsStore} from '@/stores/settings'
-import {copy, sleep, snapVideoImage} from '@/components/KvmPlayer/utils'
-import QrcodeDecoder from '@/components/KvmPlayer/utils/qrcode-decoder'
+import {sleep} from '@/components/KvmPlayer/utils'
 import {eventBus} from '@/utils/event-bus'
 
 const emit = defineEmits(['connected', 'disconnected'])
@@ -251,6 +250,25 @@ const bindAbsoluteMouse = (absEl) => {
     e.stopPropagation()
   }
 
+  const writeSerialThrottled = useThrottleFn(
+    ({pressedBits, x, y}) => {
+      writeSerial(
+        new Uint8Array(
+          genPacket(
+            CmdType.CMD_SEND_MS_ABS_DATA,
+            0x02,
+            pressedBits,
+            ...decomposeHexToBytes(x),
+            ...decomposeHexToBytes(y),
+            0,
+          ),
+        ),
+      )
+    },
+    16,
+    true,
+  )
+
   absEl.onmousemove =
     absEl.onmousedown =
     absEl.onmouseup =
@@ -260,6 +278,7 @@ const bindAbsoluteMouse = (absEl) => {
 
         let pressedBits = event.buttons
 
+        // TODO: optimize,
         const rect = absEl.getBoundingClientRect()
         const screenWidth = rect.width
         const screenHeight = rect.height
@@ -287,18 +306,12 @@ const bindAbsoluteMouse = (absEl) => {
         //   y,
         // })
 
-        writeSerial(
-          new Uint8Array(
-            genPacket(
-              CmdType.CMD_SEND_MS_ABS_DATA,
-              0x02,
-              pressedBits,
-              ...decomposeHexToBytes(x),
-              ...decomposeHexToBytes(y),
-              0,
-            ),
-          ),
-        )
+        // 9600 波特率，打开浏览器控制台后鼠标移动会很慢，需要节流
+        writeSerialThrottled({
+          pressedBits,
+          x,
+          y,
+        })
       }
 }
 watch(
@@ -349,11 +362,13 @@ const handleKeydown = async (event: KeyboardEvent) => {
   ])
   await writeSerial(value)
 }
-const handleKeyup = async (event: KeyboardEvent) => {
+const handleKeyup = async (event?: KeyboardEvent) => {
   if (!serialPort.value) {
     return
   }
-  event.preventDefault()
+  if (event) {
+    event.preventDefault()
+  }
   const value = new Uint8Array([
     ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, 0, 0, 0, 0, 0, 0, 0, 0),
   ])
@@ -362,11 +377,18 @@ const handleKeyup = async (event: KeyboardEvent) => {
 useEventListener(document, 'keydown', handleKeydown)
 useEventListener(document, 'keyup', handleKeyup)
 
+const focused = useWindowFocus()
+watch(focused, (val) => {
+  if (!val) {
+    handleKeyup()
+  }
+})
+
 const selectedTransfer = ref('')
 const transferOptions = [
   {
     value: '',
-    label: '📜 Transfer',
+    label: 'Text Transfer',
   },
   {
     value: 'send_text',
@@ -402,7 +424,7 @@ const handleTransferSelect = async () => {
 
 const selectedComboKey = ref('')
 const specialKeyOptions = [
-  {value: '', label: '⌨️ Combo Keys'},
+  {value: '', label: 'Select Combo Keys'},
   {
     value: 'ctrl_alt_del',
     label: 'Ctrl + Alt + Del',
@@ -609,43 +631,71 @@ defineExpose({
 
 <template>
   <div ref="rootRef" class="kvm-input flex-row-center-gap scrollbar-mini" tabindex="-1">
-    <button v-if="!serialPort" @click="initSerial" class="themed-button blue">
-      🔌 Connect Serial
+    <button
+      v-if="!serialPort"
+      @click="initSerial"
+      class="btn-no-style blue"
+      title="🔌 Connect Serial"
+    >
+      <span class="mdi mdi-connection"></span>
     </button>
     <template v-else>
-      <button @click="closeSerial" class="themed-button" style="color: #ffcc00; font-weight: bold">
-        Close Serial
+      <button @click="closeSerial" class="btn-no-style orange" title="Close Serial">
+        <span class="mdi mdi-lan-disconnect"></span>
       </button>
-      <!--<button @click="lock(rootRef)" class="themed-button blue">Capture Mouse</button>-->
+      <!--<button @click="lock(rootRef)" class="btn-no-style blue">Capture Mouse</button>-->
 
-      <select v-model="selectedTransfer" class="themed-button" @change="handleTransferSelect">
-        <option v-for="item in transferOptions" :key="item.value" :value="item.value">
-          {{ item.label }}
-        </option>
-      </select>
-      <select v-model="selectedComboKey" class="themed-button" @change="handleSendComboKey">
-        <option
-          v-for="item in specialKeyOptions"
-          :key="item.value"
-          :value="item.value"
-          :disabled="item.disabled"
-        >
-          {{ item.label }}
-        </option>
-      </select>
-      <select v-model="selectedMediaKey" class="themed-button" @change="handleSendMedialKey">
-        <option :value="''">⌨️ Media Keys</option>
-        <optgroup label="ACPI">
-          <option v-for="item in mediaKeyACPIOptions" :key="item.value" :value="item.value">
+      <label
+        class="select-label-wrapper"
+        title="Text Transfer"
+        :class="{activated: selectedTransfer !== ''}"
+      >
+        <span class="mdi mdi-card-text"></span>
+        <select v-model="selectedTransfer" class="btn-no-style" @change="handleTransferSelect">
+          <option v-for="item in transferOptions" :key="item.value" :value="item.value">
             {{ item.label }}
           </option>
-        </optgroup>
-        <optgroup v-for="group in mediaKeyCommonGroups" :key="group.label" :label="group.label">
-          <option v-for="item in group.children" :key="item.value" :value="item.value">
+        </select>
+      </label>
+
+      <label
+        class="select-label-wrapper"
+        title="⌨️ Send Combo Keys"
+        :class="{activated: selectedComboKey !== ''}"
+      >
+        <span class="mdi mdi-keyboard-close-outline"></span>
+        <select v-model="selectedComboKey" class="btn-no-style" @change="handleSendComboKey">
+          <option
+            v-for="item in specialKeyOptions"
+            :key="item.value"
+            :value="item.value"
+            :disabled="item.disabled"
+          >
             {{ item.label }}
           </option>
-        </optgroup>
-      </select>
+        </select>
+      </label>
+
+      <label
+        class="select-label-wrapper"
+        title="⌨️ Send Media Keys"
+        :class="{activated: selectedMediaKey !== ''}"
+      >
+        <span class="mdi mdi-keyboard-close"></span>
+        <select v-model="selectedMediaKey" class="btn-no-style" @change="handleSendMedialKey">
+          <option :value="''">Select Media Keys</option>
+          <optgroup label="ACPI">
+            <option v-for="item in mediaKeyACPIOptions" :key="item.value" :value="item.value">
+              {{ item.label }}
+            </option>
+          </optgroup>
+          <optgroup v-for="group in mediaKeyCommonGroups" :key="group.label" :label="group.label">
+            <option v-for="item in group.children" :key="item.value" :value="item.value">
+              {{ item.label }}
+            </option>
+          </optgroup>
+        </select>
+      </label>
     </template>
   </div>
 </template>

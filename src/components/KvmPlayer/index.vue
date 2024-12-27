@@ -16,6 +16,8 @@ import KvmInput from '@/components/KvmPlayer/KvmInput.vue'
 import {CursorHider} from '@/components/KvmPlayer/utils/cursor-hider'
 import moment from 'moment/moment'
 import QRScanner from '@/components/KvmPlayer/QRScanner.vue'
+import {useActionBar} from '@/components/KvmPlayer/hooks/use-action-bar'
+import DragButton from '@/components/KvmPlayer/UI/DragButton.vue'
 
 const getEnumerateDevices = async () => {
   if (!navigator.mediaDevices?.enumerateDevices) {
@@ -82,29 +84,22 @@ const listenDeviceChange = () => {
   }
 }
 
-const mouseHider = shallowRef()
-const actionBarRef = shallowRef()
 const rootRef = shallowRef()
 
-watch(
-  () => settingsStore.autoHideUI,
-  (val) => {
-    if (mouseHider.value) {
-      if (val) {
-        mouseHider.value.start()
-      } else {
-        mouseHider.value.stop()
-      }
-    }
-  },
-)
+const {actionBarRef, isShowFloatBar, isShowFloatBarInNonKvmMode} = useActionBar()
 
 const permissionCamera = usePermission('camera')
 const permissionMicrophone = usePermission('microphone')
 
+const requirePermission = () => {
+  clearSelect()
+  initDevices()
+}
+
 const initDevices = async () => {
   try {
     loadingText.value = 'Initializing devices...'
+
     if (settingsStore.currentVideoDeviceId || settingsStore.currentAudioDeviceId) {
       await startMediaStream()
       await updateDeviceList()
@@ -143,30 +138,16 @@ const initDevices = async () => {
 
 onMounted(async () => {
   await initDevices()
-  mouseHider.value = new CursorHider(
-    '#app',
-    ({el, isShow}) => {
-      const actionBarEl = actionBarRef.value
-      if (!isShow) {
-        el.style.cursor = 'none'
-        actionBarEl.classList.remove('visible')
-      } else {
-        el.style.cursor = ''
-        actionBarEl.classList.add('visible')
-      }
-    },
-    3000,
-  )
-  if (!settingsStore.autoHideUI) {
-    mouseHider.value.stop()
-  }
 })
 
 onBeforeUnmount(() => {
-  if (mouseHider.value) {
-    mouseHider.value.stop()
-  }
   stopMediaStreaming()
+})
+
+const graphInfo = ref({
+  width: 1,
+  height: 1,
+  aspectRatio: 1,
 })
 
 /**
@@ -242,10 +223,17 @@ const startMediaStream = async () => {
     const stream = await navigator.mediaDevices.getUserMedia(constraints)
     mediaStreamRef.value = stream
     console.log('stream', stream)
+
     const video = videoRef.value
     video.srcObject = stream
     video.onloadedmetadata = () => {
       video.play()
+      console.warn(video, video.videoWidth, video.videoHeight)
+      graphInfo.value = {
+        width: video.videoWidth,
+        height: video.videoHeight,
+        aspectRatio: video.videoWidth / video.videoHeight,
+      }
     }
   } catch (error: any) {
     console.error(error)
@@ -376,7 +364,15 @@ const enterInputMode = () => {
   kvmInputRef.value.autoEnable(absMouseRef.value)
 }
 
-const isFolded = useStorage('actions_is_folded', false)
+const isFolded = useStorage('wmd__actions_is_folded', false)
+
+const isActionBarVisible = computed(() => {
+  return (
+    (isShowFloatBar.value && settingsStore.floatUI && settingsStore.enableKvmInput) ||
+    !settingsStore.floatUI ||
+    (!settingsStore.enableKvmInput && isShowFloatBarInNonKvmMode.value)
+  )
+})
 </script>
 
 <template>
@@ -384,160 +380,229 @@ const isFolded = useStorage('actions_is_folded', false)
     <transition name="fade">
       <div class="loading-layer" v-if="loadingText">⌛ {{ loadingText }}</div>
     </transition>
-    <div @click.stop :class="{absolute: settingsStore.autoHideUI}" class="action-bar-wrap">
+    <div @click.stop :class="[settingsStore.floatUI ? 'float-ui' : null]" class="action-bar-wrap">
+      <DragButton
+        v-if="settingsStore.floatUI && settingsStore.enableKvmInput"
+        :docked="!isShowFloatBar"
+        @click.stop="isShowFloatBar = !isShowFloatBar"
+      />
       <div
         ref="actionBarRef"
         class="action-bar font-emoji"
-        :class="{
-          visible:
-            !settingsStore.autoHideUI ||
-            (!settingsStore.currentVideoDeviceId && !settingsStore.currentAudioDeviceId),
-        }"
+        :class="[
+          settingsStore.floatUI && 'float-bar',
+          {
+            visible: isActionBarVisible,
+          },
+        ]"
       >
-        <div class="action-bar-side">
-          <button class="themed-button" @click="isFolded = !isFolded">
-            {{ isFolded ? '▶️' : '◀️' }}
-          </button>
-          <div v-show="!isFolded" class="flex-row-center-gap">
-            <label for="videoSelect">
-              <span>Video:</span>
-              <template v-if="permissionCamera === 'granted'">
-                <select
-                  class="themed-button"
-                  title="Video"
-                  id="videoSelect"
-                  v-model="settingsStore.currentVideoDeviceId"
-                  @change="handleStartStreaming"
-                >
-                  <option
-                    v-for="item in videoDeviceList"
-                    :key="item.deviceId"
-                    :value="item.deviceId"
-                  >
-                    {{ item.label }}
-                  </option>
-                </select>
-              </template>
-              <button class="themed-button" v-else @click="initDevices">
-                ⚠️ {{ permissionCamera }}
-              </button>
-            </label>
-
-            <label for="audioSelect">
-              <span>Audio:</span>
-              <template v-if="permissionMicrophone === 'granted'">
-                <select
-                  class="themed-button"
-                  name="Audio"
-                  id="audioSelect"
-                  v-model="settingsStore.currentAudioDeviceId"
-                  @change="handleStartStreaming"
-                >
-                  <option
-                    v-for="item in audioDeviceList"
-                    :key="item.deviceId"
-                    :value="item.deviceId"
-                  >
-                    {{ item.label }}
-                  </option>
-                </select>
-              </template>
-              <button class="themed-button" v-else @click="initDevices">
-                ⚠️ {{ permissionMicrophone }}
-              </button>
-            </label>
-
-            <button class="themed-button" @click="stopMediaStreaming" v-if="isStreaming">
-              ⏹Stop
-            </button>
-            <button class="themed-button" @click="handleStartStreaming" v-else>▶Start</button>
-            <button class="themed-button" @click="clearSelect">🛑Reset</button>
-
-            <span style="opacity: 0.5">|</span>
-            <button
-              class="themed-button"
-              @click="handleStartStreamingCaptureScreen"
-              title="Capture Screen"
-            >
-              🖥️Screen...
-            </button>
-
-            <QRScanner :disabled="!isStreaming" />
-
-            <button
-              class="themed-button"
-              @click="handleScreenshot"
-              title="Take a photo"
-              :disabled="!isStreaming"
-            >
-              📷Screenshot
-            </button>
-
-            <template v-if="videoRecorder">
-              <button
-                class="themed-button"
-                v-if="Boolean(videoRecorder.mediaRecorder)"
-                @click="videoRecorder.stop()"
-                title="Save record"
-                style="background: #f44336"
+        <transition name="fade-left">
+          <div style="transition-delay: 0.3s" v-show="isActionBarVisible" class="action-bar-side">
+            <div class="flex-row-center-gap">
+              <label
+                class="select-label-wrapper"
+                for="videoSelect"
+                title="Select Video Device"
+                :class="{activated: settingsStore.currentVideoDeviceId}"
               >
-                📹Save
+                <span class="mdi mdi-monitor"></span>
+                <template v-if="permissionCamera === 'granted'">
+                  <select
+                    class="btn-no-style"
+                    id="videoSelect"
+                    v-model="settingsStore.currentVideoDeviceId"
+                    @change="handleStartStreaming"
+                  >
+                    <option
+                      v-for="item in videoDeviceList"
+                      :key="item.deviceId"
+                      :value="item.deviceId"
+                    >
+                      {{ item.label }}
+                    </option>
+                  </select>
+                </template>
+                <button
+                  :title="permissionCamera"
+                  class="btn-no-style icon-alert"
+                  v-else
+                  @click="requirePermission"
+                >
+                  ⚠️
+                </button>
+              </label>
+
+              <label
+                class="select-label-wrapper"
+                for="audioSelect"
+                title="Select Audio Device"
+                :class="{activated: settingsStore.currentAudioDeviceId}"
+              >
+                <span class="mdi mdi-speaker"></span>
+                <template v-if="permissionMicrophone === 'granted'">
+                  <select
+                    class="btn-no-style"
+                    id="audioSelect"
+                    v-model="settingsStore.currentAudioDeviceId"
+                    @change="handleStartStreaming"
+                  >
+                    <option
+                      v-for="item in audioDeviceList"
+                      :key="item.deviceId"
+                      :value="item.deviceId"
+                    >
+                      {{ item.label }}
+                    </option>
+                  </select>
+                </template>
+                <button
+                  class="btn-no-style icon-alert"
+                  :title="permissionMicrophone"
+                  v-else
+                  @click="requirePermission"
+                >
+                  ⚠️
+                </button>
+              </label>
+
+              <button
+                class="btn-no-style orange"
+                @click="stopMediaStreaming"
+                v-if="isStreaming"
+                title="⏹ Stop Media Devices"
+              >
+                <span class="mdi mdi-stop-circle-outline"></span>
               </button>
               <button
+                class="btn-no-style green"
+                title="▶ Start Media Devices"
+                @click="handleStartStreaming"
                 v-else
-                class="themed-button"
-                @click="videoRecorder.start()"
-                :disabled="!isStreaming"
-                title="Record canvas"
               >
-                📹Record...
+                <span class="mdi mdi-play-circle-outline"></span>
               </button>
-            </template>
+              <button class="btn-no-style" @click="clearSelect" title="🛑 Reset All Media Devices">
+                <span class="mdi mdi-close-circle-outline"></span>
+              </button>
+
+              <button title="More" class="btn-no-style" @click="isFolded = !isFolded">
+                <span v-if="!isFolded" class="mdi mdi-chevron-left"></span>
+                <span v-else class="mdi mdi-chevron-right"></span>
+              </button>
+
+              <transition name="fade-right">
+                <div v-show="!isFolded" class="action-bar-side">
+                  <button
+                    class="btn-no-style"
+                    @click="handleStartStreamingCaptureScreen"
+                    title="🖥️ Capture Screen..."
+                  >
+                    <span class="mdi mdi-cast-variant"></span>
+                  </button>
+
+                  <QRScanner :disabled="!isStreaming" />
+
+                  <button
+                    class="btn-no-style"
+                    @click="handleScreenshot"
+                    :disabled="!isStreaming"
+                    title="📷 Screenshot"
+                  >
+                    <span class="mdi mdi-monitor-screenshot"></span>
+                  </button>
+
+                  <template v-if="videoRecorder">
+                    <button
+                      class="btn-no-style recording"
+                      v-if="Boolean(videoRecorder.mediaRecorder)"
+                      @click="videoRecorder.stop()"
+                      title="📹 Recording, click to save record"
+                    >
+                      <span class="mdi mdi-record"></span>
+                    </button>
+                    <button
+                      v-else
+                      class="btn-no-style"
+                      @click="videoRecorder.start()"
+                      :disabled="!isStreaming"
+                      title="📹 Record"
+                    >
+                      <span class="mdi mdi-record-circle-outline"></span>
+                    </button>
+                  </template>
+                </div>
+              </transition>
+            </div>
           </div>
+        </transition>
 
-          <template v-if="settingsStore.enableKvmInput">
-            <span style="opacity: 0.5">|</span>
-            <KvmInput ref="kvmInputRef" @connected="enterInputMode" />
-          </template>
-        </div>
+        <transition name="fade-right">
+          <div
+            style="transition-delay: 0.3s"
+            v-show="isActionBarVisible"
+            class="action-bar-side right"
+          >
+            <template v-if="settingsStore.enableKvmInput">
+              <KvmInput ref="kvmInputRef" @connected="enterInputMode" />
+              <span style="opacity: 0.5">|</span>
+            </template>
 
-        <div class="action-bar-side right">
-          <button @click="showSettings = !showSettings" title="Settings" class="themed-button">
-            ⚙️
-          </button>
-          <button v-if="!isTauri" @click="toggleFullScreen" class="themed-button">
-            {{ isFullscreen ? '╳' : '⛶' }}
-            <!--&#x26F6;-->
-            <!-- https://www.compart.com/en/unicode/category/So -->
-          </button>
-          <TauriActions v-if="isTauri" />
-        </div>
+            <button @click="showSettings = !showSettings" title="Settings" class="btn-no-style">
+              <span class="mdi mdi-cog"></span>
+            </button>
+            <button
+              v-if="!isTauri"
+              @click="toggleFullScreen"
+              class="btn-no-style"
+              title="Fullscreen"
+            >
+              <span v-if="!isFullscreen" class="mdi mdi-fullscreen"></span>
+              <span v-else class="mdi mdi-fullscreen-exit"></span>
+
+              <!--{{ isFullscreen ? '🗔' : '⛶' }}-->
+              <!--&#x26F6;-->
+              <!--╳-->
+              <!-- https://www.compart.com/en/unicode/category/So -->
+            </button>
+            <TauriActions v-if="isTauri" />
+          </div>
+        </transition>
       </div>
     </div>
 
-    <div class="video-wrapper" @dblclick.stop="toggleFullScreen">
+    <div class="main-graph-wrapper">
       <div
-        v-show="settingsStore.enableKvmInput && settingsStore.cursorMode === 'absolute'"
-        class="abs-mouse-container"
+        class="video-wrapper"
+        @dblclick.stop="toggleFullScreen"
+        :style="
+          settingsStore.fitMode === 'contain'
+            ? {aspectRatio: graphInfo.aspectRatio}
+            : {width: '100%', height: '100%'}
+        "
       >
         <div
-          class="abs-mouse-area"
-          :class="{showBorder: showSettings}"
-          ref="absMouseRef"
-          :style="{
-            width: settingsStore.absMouseAreaWidth + '%',
-            height: settingsStore.absMouseAreaHeight + '%',
-          }"
-        ></div>
+          v-show="settingsStore.enableKvmInput && settingsStore.cursorMode === 'absolute'"
+          class="abs-mouse-container"
+        >
+          <div
+            class="abs-mouse-area"
+            :class="{showBorder: showSettings}"
+            ref="absMouseRef"
+            :style="{
+              width: settingsStore.absMouseAreaWidth + '%',
+              height: settingsStore.absMouseAreaHeight + '%',
+            }"
+          ></div>
+        </div>
+        <video
+          ref="videoRef"
+          id="streamVideo"
+          autoplay
+          playsinline
+          :controls="settingsStore.isShowControls"
+          :style="videoFilterStyle"
+        ></video>
       </div>
-      <video
-        ref="videoRef"
-        id="streamVideo"
-        autoplay
-        playsinline
-        :controls="settingsStore.isShowControls"
-        :style="videoFilterStyle"
-      ></video>
     </div>
 
     <div class="video-fg-layer" v-if="settingsStore.filterShowFg"></div>
@@ -555,61 +620,167 @@ const isFolded = useStorage('actions_is_folded', false)
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  --radius: 8px;
+  --bg: black;
 
   .action-bar-wrap {
     z-index: 10;
     user-select: none;
+    pointer-events: none;
+
+    &.float-ui {
+      position: absolute;
+      left: 0;
+      right: 0;
+      padding-top: 10px;
+    }
 
     .action-bar {
       height: 100%;
       padding: 4px;
       background: linear-gradient(180deg, rgba(0, 0, 0, 0.53), transparent);
-      visibility: hidden;
-      opacity: 0;
-      transition: all 0.3s;
+      transition: opacity 0.3s;
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
+      align-items: center;
 
-      &.visible {
-        visibility: visible;
-        opacity: 1;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: auto;
+      visibility: visible;
+      opacity: 1;
+
+      &.float-bar {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        outline: 1px solid rgba(255, 255, 255, 0.1);
+
+        border-radius: 100px;
+        align-items: center;
+
+        margin: 0 auto;
+        max-width: 1000px;
+
+        visibility: hidden;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+
+        &.visible {
+          visibility: visible;
+          opacity: 1;
+
+          width: 500px;
+          height: 30px;
+          min-height: 28px;
+          padding: 4px 14px;
+
+          transition-delay: 0.15s;
+        }
+
+        .flex-row-center-gap {
+          gap: 4px;
+        }
+
+        .select-label-wrapper {
+          border-radius: 4px;
+          width: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          transition: all 0.1s;
+
+          &:hover {
+            background-color: rgba(203, 203, 203, 0.4);
+          }
+
+          &::after {
+            left: 4px;
+            right: 4px;
+          }
+
+          select {
+            position: absolute;
+            z-index: 2;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+          }
+
+          .icon-alert {
+            position: absolute;
+            z-index: 2;
+            right: 0;
+            bottom: 0;
+          }
+        }
       }
 
       span,
       a {
-        color: white;
         font-size: 12px;
       }
+
       a {
         text-decoration: none;
       }
 
-      select {
-        width: 150px;
-        line-height: 1;
+      .select-label-wrapper {
+        position: relative;
 
-        option {
-          background: white;
-          color: black;
+        &.activated {
+          &::after {
+            background-color: #4caf50;
+          }
+        }
+
+        &::after {
+          content: ' ';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background-color: currentColor;
+          border-radius: 10px;
+          pointer-events: none;
+        }
+
+        .mdi {
+          position: relative;
+          z-index: 1;
+          pointer-events: none;
         }
       }
 
       select {
-        //option {
-        //  background-color: #303030;
-        //  color: white;
-        //}
+        width: 50px;
+        line-height: 1;
+        font-size: 12px;
+        background: black !important;
+
+        option {
+          color: white;
+          background: #252525;
+        }
+      }
+
+      select {
       }
 
       .action-bar-side {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         flex-wrap: wrap;
 
         &.right {
           justify-content: flex-end;
+          flex-wrap: nowrap;
         }
 
         label {
@@ -618,30 +789,69 @@ const isFolded = useStorage('actions_is_folded', false)
           gap: 2px;
         }
       }
-    }
 
-    &.absolute {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 70px;
-      .action-bar {
-        padding: 10px;
+      select {
+        width: 100px;
+      }
+
+      .mdi {
+        font-size: 18px;
+      }
+
+      .recording {
+        color: #f44336;
+        animation: linear blink-animation 3s infinite;
+      }
+
+      .btn-no-style {
+        display: flex;
+        line-height: 1;
+        border-radius: 100px;
+        padding: 2px;
+        transition: all 0.1s;
+
+        &:hover {
+          background-color: rgba(203, 203, 203, 0.4);
+        }
+
+        &.blue {
+          color: #2196f3;
+        }
+
+        &.green {
+          color: #4caf50;
+        }
+
+        &.orange {
+          color: #ffcc00;
+        }
+
+        &.red {
+          color: #f44336;
+        }
       }
     }
   }
 
-  .video-wrapper {
-    flex: 1;
+  .main-graph-wrapper {
     overflow: hidden;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .video-wrapper {
+    max-width: 100%;
+    max-height: 100%;
     position: relative;
 
     video {
       width: 100%;
       height: 100%;
-      /* object-fit: contain; */
       transition: all 1s;
     }
+
     .abs-mouse-container {
       position: absolute;
       top: 0;
@@ -652,12 +862,15 @@ const isFolded = useStorage('actions_is_folded', false)
       display: flex;
       align-items: center;
       justify-content: center;
+
       .abs-mouse-area {
         width: 100%;
         height: 100%;
+
         &.showBorder {
           outline: 2px solid #f44336;
           outline-offset: -2px;
+
           &::before {
             content: 'Abs Mouse Area';
             background-color: #f44336;
@@ -670,6 +883,15 @@ const isFolded = useStorage('actions_is_folded', false)
             font-weight: bold;
           }
         }
+
+        //cursor:
+        //  url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="%23000" stroke-width="0.25"><circle cx="12" cy="12" r="8.5"></circle><path d="M1 12h5M18 12h5M12 6V1.04M12 23v-4.96M11.95 11.95h.1v.1h-.1z"></path></g></svg>')
+        //    12 12,
+        //  crosshair;
+        //cursor:
+        //  url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="%23FFF" stroke="%23000" stroke-width="2"></circle></svg>')
+        //    3 3,
+        //  crosshair;
         cursor: crosshair;
       }
     }

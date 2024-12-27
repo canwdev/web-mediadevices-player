@@ -44,7 +44,10 @@ export class VideoRecorder {
 
   stop() {
     if (this.mediaRecorder) {
-      this.mediaRecorder.stop()
+      // 等待1s，防止最后的画面没录上
+      setTimeout(() => {
+        this.mediaRecorder.stop()
+      }, 1000)
     }
   }
 }
