@@ -86,14 +86,20 @@ const listenDeviceChange = () => {
 
 const rootRef = shallowRef()
 
-const {actionBarRef, isShowFloatBar} = useActionBar()
+const {actionBarRef, isShowFloatBar, isShowFloatBarInNonKvmMode} = useActionBar()
 
 const permissionCamera = usePermission('camera')
 const permissionMicrophone = usePermission('microphone')
 
+const requirePermission = () => {
+  clearSelect()
+  initDevices()
+}
+
 const initDevices = async () => {
   try {
     loadingText.value = 'Initializing devices...'
+
     if (settingsStore.currentVideoDeviceId || settingsStore.currentAudioDeviceId) {
       await startMediaStream()
       await updateDeviceList()
@@ -359,6 +365,14 @@ const enterInputMode = () => {
 }
 
 const isFolded = useStorage('wmd__actions_is_folded', false)
+
+const isActionBarVisible = computed(() => {
+  return (
+    (isShowFloatBar.value && settingsStore.floatUI && settingsStore.enableKvmInput) ||
+    !settingsStore.floatUI ||
+    (!settingsStore.enableKvmInput && isShowFloatBarInNonKvmMode.value)
+  )
+})
 </script>
 
 <template>
@@ -372,173 +386,187 @@ const isFolded = useStorage('wmd__actions_is_folded', false)
         :docked="!isShowFloatBar"
         @click.stop="isShowFloatBar = !isShowFloatBar"
       />
-
       <div
         ref="actionBarRef"
         class="action-bar font-emoji"
         :class="[
           settingsStore.floatUI && 'float-bar',
           {
-            visible: (isShowFloatBar && settingsStore.floatUI) || !settingsStore.floatUI,
+            visible: isActionBarVisible,
           },
         ]"
       >
-        <div class="action-bar-side">
-          <div class="flex-row-center-gap">
-            <label
-              class="select-label-wrapper"
-              for="videoSelect"
-              title="Select Video Device"
-              :class="{activated: settingsStore.currentVideoDeviceId}"
-            >
-              <span class="mdi mdi-monitor"></span>
-              <template v-if="permissionCamera === 'granted'">
-                <select
-                  class="btn-no-style"
-                  id="videoSelect"
-                  v-model="settingsStore.currentVideoDeviceId"
-                  @change="handleStartStreaming"
-                >
-                  <option
-                    v-for="item in videoDeviceList"
-                    :key="item.deviceId"
-                    :value="item.deviceId"
+        <transition name="fade-left">
+          <div style="transition-delay: 0.3s" v-show="isActionBarVisible" class="action-bar-side">
+            <div class="flex-row-center-gap">
+              <label
+                class="select-label-wrapper"
+                for="videoSelect"
+                title="Select Video Device"
+                :class="{activated: settingsStore.currentVideoDeviceId}"
+              >
+                <span class="mdi mdi-monitor"></span>
+                <template v-if="permissionCamera === 'granted'">
+                  <select
+                    class="btn-no-style"
+                    id="videoSelect"
+                    v-model="settingsStore.currentVideoDeviceId"
+                    @change="handleStartStreaming"
                   >
-                    {{ item.label }}
-                  </option>
-                </select>
-              </template>
-              <button
-                :title="permissionCamera"
-                class="btn-no-style icon-alert"
-                v-else
-                @click="initDevices"
-              >
-                ⚠️
-              </button>
-            </label>
-
-            <label
-              class="select-label-wrapper"
-              for="audioSelect"
-              title="Select Audio Device"
-              :class="{activated: settingsStore.currentAudioDeviceId}"
-            >
-              <span class="mdi mdi-speaker"></span>
-              <template v-if="permissionMicrophone === 'granted'">
-                <select
-                  class="btn-no-style"
-                  id="audioSelect"
-                  v-model="settingsStore.currentAudioDeviceId"
-                  @change="handleStartStreaming"
-                >
-                  <option
-                    v-for="item in audioDeviceList"
-                    :key="item.deviceId"
-                    :value="item.deviceId"
-                  >
-                    {{ item.label }}
-                  </option>
-                </select>
-              </template>
-              <button
-                class="btn-no-style icon-alert"
-                :title="permissionMicrophone"
-                v-else
-                @click="initDevices"
-              >
-                ⚠️
-              </button>
-            </label>
-
-            <button
-              class="btn-no-style orange"
-              @click="stopMediaStreaming"
-              v-if="isStreaming"
-              title="⏹ Stop Media Devices"
-            >
-              <span class="mdi mdi-stop-circle-outline"></span>
-            </button>
-            <button
-              class="btn-no-style green"
-              title="▶ Start Media Devices"
-              @click="handleStartStreaming"
-              v-else
-            >
-              <span class="mdi mdi-play-circle-outline"></span>
-            </button>
-            <button class="btn-no-style" @click="clearSelect" title="🛑 Reset All Media Devices">
-              <span class="mdi mdi-close-circle-outline"></span>
-            </button>
-
-            <button title="More" class="btn-no-style" @click="isFolded = !isFolded">
-              <span v-if="!isFolded" class="mdi mdi-chevron-left"></span>
-              <span v-else class="mdi mdi-chevron-right"></span>
-            </button>
-
-            <div v-show="!isFolded" class="action-bar-side">
-              <button
-                class="btn-no-style"
-                @click="handleStartStreamingCaptureScreen"
-                title="🖥️ Capture Screen..."
-              >
-                <span class="mdi mdi-cast-variant"></span>
-              </button>
-
-              <QRScanner :disabled="!isStreaming" />
-
-              <button
-                class="btn-no-style"
-                @click="handleScreenshot"
-                :disabled="!isStreaming"
-                title="📷 Screenshot"
-              >
-                <span class="mdi mdi-monitor-screenshot"></span>
-              </button>
-
-              <template v-if="videoRecorder">
+                    <option
+                      v-for="item in videoDeviceList"
+                      :key="item.deviceId"
+                      :value="item.deviceId"
+                    >
+                      {{ item.label }}
+                    </option>
+                  </select>
+                </template>
                 <button
-                  class="btn-no-style recording"
-                  v-if="Boolean(videoRecorder.mediaRecorder)"
-                  @click="videoRecorder.stop()"
-                  title="📹 Recording, click to save record"
-                >
-                  <span class="mdi mdi-record"></span>
-                </button>
-                <button
+                  :title="permissionCamera"
+                  class="btn-no-style icon-alert"
                   v-else
-                  class="btn-no-style"
-                  @click="videoRecorder.start()"
-                  :disabled="!isStreaming"
-                  title="📹 Record"
+                  @click="requirePermission"
                 >
-                  <span class="mdi mdi-record-circle-outline"></span>
+                  ⚠️
                 </button>
-              </template>
+              </label>
+
+              <label
+                class="select-label-wrapper"
+                for="audioSelect"
+                title="Select Audio Device"
+                :class="{activated: settingsStore.currentAudioDeviceId}"
+              >
+                <span class="mdi mdi-speaker"></span>
+                <template v-if="permissionMicrophone === 'granted'">
+                  <select
+                    class="btn-no-style"
+                    id="audioSelect"
+                    v-model="settingsStore.currentAudioDeviceId"
+                    @change="handleStartStreaming"
+                  >
+                    <option
+                      v-for="item in audioDeviceList"
+                      :key="item.deviceId"
+                      :value="item.deviceId"
+                    >
+                      {{ item.label }}
+                    </option>
+                  </select>
+                </template>
+                <button
+                  class="btn-no-style icon-alert"
+                  :title="permissionMicrophone"
+                  v-else
+                  @click="requirePermission"
+                >
+                  ⚠️
+                </button>
+              </label>
+
+              <button
+                class="btn-no-style orange"
+                @click="stopMediaStreaming"
+                v-if="isStreaming"
+                title="⏹ Stop Media Devices"
+              >
+                <span class="mdi mdi-stop-circle-outline"></span>
+              </button>
+              <button
+                class="btn-no-style green"
+                title="▶ Start Media Devices"
+                @click="handleStartStreaming"
+                v-else
+              >
+                <span class="mdi mdi-play-circle-outline"></span>
+              </button>
+              <button class="btn-no-style" @click="clearSelect" title="🛑 Reset All Media Devices">
+                <span class="mdi mdi-close-circle-outline"></span>
+              </button>
+
+              <button title="More" class="btn-no-style" @click="isFolded = !isFolded">
+                <span v-if="!isFolded" class="mdi mdi-chevron-left"></span>
+                <span v-else class="mdi mdi-chevron-right"></span>
+              </button>
+
+              <transition name="fade-right">
+                <div v-show="!isFolded" class="action-bar-side">
+                  <button
+                    class="btn-no-style"
+                    @click="handleStartStreamingCaptureScreen"
+                    title="🖥️ Capture Screen..."
+                  >
+                    <span class="mdi mdi-cast-variant"></span>
+                  </button>
+
+                  <QRScanner :disabled="!isStreaming" />
+
+                  <button
+                    class="btn-no-style"
+                    @click="handleScreenshot"
+                    :disabled="!isStreaming"
+                    title="📷 Screenshot"
+                  >
+                    <span class="mdi mdi-monitor-screenshot"></span>
+                  </button>
+
+                  <template v-if="videoRecorder">
+                    <button
+                      class="btn-no-style recording"
+                      v-if="Boolean(videoRecorder.mediaRecorder)"
+                      @click="videoRecorder.stop()"
+                      title="📹 Recording, click to save record"
+                    >
+                      <span class="mdi mdi-record"></span>
+                    </button>
+                    <button
+                      v-else
+                      class="btn-no-style"
+                      @click="videoRecorder.start()"
+                      :disabled="!isStreaming"
+                      title="📹 Record"
+                    >
+                      <span class="mdi mdi-record-circle-outline"></span>
+                    </button>
+                  </template>
+                </div>
+              </transition>
             </div>
           </div>
-        </div>
+        </transition>
 
-        <div class="action-bar-side right">
-          <template v-if="settingsStore.enableKvmInput">
-            <KvmInput ref="kvmInputRef" @connected="enterInputMode" />
-            <span style="opacity: 0.5">|</span>
-          </template>
+        <transition name="fade-right">
+          <div
+            style="transition-delay: 0.3s"
+            v-show="isActionBarVisible"
+            class="action-bar-side right"
+          >
+            <template v-if="settingsStore.enableKvmInput">
+              <KvmInput ref="kvmInputRef" @connected="enterInputMode" />
+              <span style="opacity: 0.5">|</span>
+            </template>
 
-          <button @click="showSettings = !showSettings" title="Settings" class="btn-no-style">
-            <span class="mdi mdi-cog"></span>
-          </button>
-          <button v-if="!isTauri" @click="toggleFullScreen" class="btn-no-style" title="Fullscreen">
-            <span v-if="!isFullscreen" class="mdi mdi-fullscreen"></span>
-            <span v-else class="mdi mdi-fullscreen-exit"></span>
+            <button @click="showSettings = !showSettings" title="Settings" class="btn-no-style">
+              <span class="mdi mdi-cog"></span>
+            </button>
+            <button
+              v-if="!isTauri"
+              @click="toggleFullScreen"
+              class="btn-no-style"
+              title="Fullscreen"
+            >
+              <span v-if="!isFullscreen" class="mdi mdi-fullscreen"></span>
+              <span v-else class="mdi mdi-fullscreen-exit"></span>
 
-            <!--{{ isFullscreen ? '🗔' : '⛶' }}-->
-            <!--&#x26F6;-->
-            <!--╳-->
-            <!-- https://www.compart.com/en/unicode/category/So -->
-          </button>
-          <TauriActions v-if="isTauri" />
-        </div>
+              <!--{{ isFullscreen ? '🗔' : '⛶' }}-->
+              <!--&#x26F6;-->
+              <!--╳-->
+              <!-- https://www.compart.com/en/unicode/category/So -->
+            </button>
+            <TauriActions v-if="isTauri" />
+          </div>
+        </transition>
       </div>
     </div>
 
@@ -639,12 +667,6 @@ const isFolded = useStorage('wmd__actions_is_folded', false)
         overflow: hidden;
         transition: all 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 
-        .action-bar-side {
-          opacity: 0;
-          transition: all 1s;
-          //transition-delay: 1s;
-        }
-
         &.visible {
           visibility: visible;
           opacity: 1;
@@ -655,10 +677,6 @@ const isFolded = useStorage('wmd__actions_is_folded', false)
           padding: 4px 14px;
 
           transition-delay: 0.15s;
-
-          .action-bar-side {
-            opacity: 1;
-          }
         }
 
         .flex-row-center-gap {
@@ -672,6 +690,8 @@ const isFolded = useStorage('wmd__actions_is_folded', false)
           align-items: center;
           justify-content: center;
           overflow: hidden;
+          transition: all 0.1s;
+
           &:hover {
             background-color: rgba(203, 203, 203, 0.4);
           }
@@ -788,6 +808,7 @@ const isFolded = useStorage('wmd__actions_is_folded', false)
         line-height: 1;
         border-radius: 100px;
         padding: 2px;
+        transition: all 0.1s;
 
         &:hover {
           background-color: rgba(203, 203, 203, 0.4);

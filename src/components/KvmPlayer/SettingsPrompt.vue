@@ -38,7 +38,7 @@ const kvmInputHelp = () => {
 </script>
 
 <template>
-  <transition name="fade">
+  <transition name="fade-scale">
     <div
       ref="rootRef"
       v-if="mVisible"
@@ -62,10 +62,10 @@ const kvmInputHelp = () => {
           </select>
         </label>
 
-        <label title="Toggle video element controls" class="cursor-pointer">
-          <input type="checkbox" v-model="settingsStore.isShowControls" />
-          <span>Video Controls UI</span>
-        </label>
+        <!--<label title="Toggle video element controls" class="cursor-pointer">-->
+        <!--  <input type="checkbox" v-model="settingsStore.isShowControls" />-->
+        <!--  <span>Video Controls UI</span>-->
+        <!--</label>-->
 
         <label class="cursor-pointer">
           <input type="checkbox" v-model="settingsStore.floatUI" />

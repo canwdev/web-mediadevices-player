@@ -22,17 +22,20 @@ export const useActionBar = () => {
       }
     },
   )
+
+  // 是否在非KVM模式下展示控制条
+  const isShowFloatBarInNonKvmMode = ref(false)
+
   onMounted(() => {
     mouseHider.value = new CursorHider(
       '#app',
       ({el, isShow}) => {
-        const actionBarEl = actionBarRef.value
         if (!isShow) {
           el.style.cursor = 'none'
-          actionBarEl.classList.remove('visible')
+          isShowFloatBarInNonKvmMode.value = false
         } else {
           el.style.cursor = ''
-          actionBarEl.classList.add('visible')
+          isShowFloatBarInNonKvmMode.value = true
         }
       },
       3000,
@@ -51,5 +54,6 @@ export const useActionBar = () => {
     actionBarRef,
     mouseHider,
     isShowFloatBar,
+    isShowFloatBarInNonKvmMode,
   }
 }
