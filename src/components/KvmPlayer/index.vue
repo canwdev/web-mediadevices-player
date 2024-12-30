@@ -145,8 +145,8 @@ onBeforeUnmount(() => {
 })
 
 const graphInfo = ref({
-  width: 1,
-  height: 1,
+  width: 100,
+  height: 100,
   aspectRatio: 1,
 })
 
@@ -178,6 +178,7 @@ const startMediaStream = async () => {
         if (vDevice) {
           // @ts-ignore
           const conf = vDevice.getCapabilities()
+          // console.log(conf)
           settingsStore.videoConfig = {
             deviceId: conf.deviceId,
             height: conf.height.max,
@@ -232,7 +233,7 @@ const startMediaStream = async () => {
       graphInfo.value = {
         width: video.videoWidth,
         height: video.videoHeight,
-        aspectRatio: video.videoWidth / video.videoHeight,
+        aspectRatio: parseFloat((video.videoWidth / video.videoHeight).toFixed(4)),
       }
     }
   } catch (error: any) {
@@ -607,7 +608,7 @@ const isActionBarVisible = computed(() => {
 
     <div class="video-fg-layer" v-if="settingsStore.filterShowFg"></div>
 
-    <SettingsPrompt @click.stop v-model:visible="showSettings" />
+    <SettingsPrompt @click.stop v-model:visible="showSettings" :graph-info="graphInfo" />
   </div>
 </template>
 

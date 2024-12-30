@@ -150,6 +150,7 @@ const {isSupported, lock, unlock, element, triggerElement} = usePointerLock(root
 })
 
 const handleRelativeMouseWheel = async (event: WheelEvent) => {
+  event.preventDefault() // 阻止默认的缩放行为
   // event.deltaY 表示滚动距离
   let value
   if (event.deltaY > 0) {
@@ -179,7 +180,7 @@ useEventListener(document, 'pointerlockchange', (event) => {
   let [pressedBits, x, y] = [0, 0, 0]
   let timer: any = null // a modified throttle strategy
 
-  document.addEventListener('wheel', handleRelativeMouseWheel)
+  document.addEventListener('wheel', handleRelativeMouseWheel, {passive: false})
   el.onmousemove =
     el.onmousedown =
     el.onmouseup =
@@ -243,7 +244,7 @@ onBeforeUnmount(() => {
 const bindAbsoluteMouse = (absEl) => {
   absMouseRef.value = absEl
 
-  document.addEventListener('wheel', handleRelativeMouseWheel)
+  document.addEventListener('wheel', handleRelativeMouseWheel, {passive: false})
   absEl.oncontextmenu = (e) => e.preventDefault()
   absEl.ondblclick = (e) => {
     e.preventDefault()
@@ -330,38 +331,54 @@ const showSendInput = async () => {
   sendText(text)
 }
 
+const eatKeys = new Set() // avoid tailing control keys (press and release key A will emit event keyup[A] and keyup[Shift])
+
 const handleKeydown = async (event: KeyboardEvent) => {
   if (!serialPort.value) {
     return
   }
   event.preventDefault()
 
+  // console.log(event)
+  // 按下 ctrl+alt 解锁鼠标
   if (event.ctrlKey && event.altKey) {
     await unlock()
   }
 
+  const isCompatibleMode = settingsStore.keyboardCompatibleMode
+
+  if (isCompatibleMode && eatKeys.has(event.key)) {
+    eatKeys.delete(event.key)
+    return
+  }
+
   const [hidCode, shift] = ASCII_KEYS.get(event.key)
   let controlBits = 0
-  if (shift) {
+  if (shift || event.shiftKey) {
     controlBits |= 0b00000010
+    eatKeys.add('Shift')
   }
   if (event.ctrlKey) {
     controlBits |= 0b00000001
-  }
-  if (event.shiftKey) {
-    controlBits |= 0b00000010
+    eatKeys.add('Control')
   }
   if (event.altKey) {
     controlBits |= 0b00000100
+    eatKeys.add('Alt')
   }
   if (event.metaKey) {
     controlBits |= 0b00001000
+    eatKeys.add('Meta')
   }
-  const value = new Uint8Array([
-    ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, controlBits, 0, hidCode, 0, 0, 0, 0, 0),
-  ])
-  await writeSerial(value)
+
+  let arr = genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, controlBits, 0, hidCode, 0, 0, 0, 0, 0)
+  if (isCompatibleMode) {
+    arr = [...arr, ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, 0, 0, 0, 0, 0, 0, 0, 0)]
+  }
+
+  await writeSerial(new Uint8Array(arr))
 }
+
 const handleKeyup = async (event?: KeyboardEvent) => {
   if (!serialPort.value) {
     return
@@ -369,10 +386,11 @@ const handleKeyup = async (event?: KeyboardEvent) => {
   if (event) {
     event.preventDefault()
   }
-  const value = new Uint8Array([
-    ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, 0, 0, 0, 0, 0, 0, 0, 0),
-  ])
-  await writeSerial(value)
+
+  // 普通模式，发送按键弹起
+  await writeSerial(
+    new Uint8Array([...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, 0, 0, 0, 0, 0, 0, 0, 0)]),
+  )
 }
 useEventListener(document, 'keydown', handleKeydown)
 useEventListener(document, 'keyup', handleKeyup)
@@ -472,7 +490,7 @@ const specialKeyOptions = [
     },
   },
   {
-    value: 'alt_tab',
+    value: 'meta_tab',
     label: 'Meta + Tab',
     values: {
       key: 'Tab',
@@ -480,10 +498,25 @@ const specialKeyOptions = [
     },
   },
   {
+    value: 'alt_tab',
+    label: 'Alt + Tab',
+    values: {
+      key: 'Tab',
+      controlBits: 0b00000100,
+    },
+  },
+  {
     value: 'esc',
     label: 'Esc',
     values: {
       key: 'Escape',
+    },
+  },
+  {
+    value: 'capslock',
+    label: 'Capslock',
+    values: {
+      key: 'Capslock',
     },
   },
   {label: '-----------------', disabled: true},

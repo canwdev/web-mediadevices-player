@@ -43,7 +43,8 @@ onMounted(() => {
   <div class="notification-item" @mouseenter="isIn = true" @mouseleave="isIn = false">
     <div class="notification-item-inner panel-blur-bg">
       <div class="message-type" :class="item.type">{{ item.type }}</div>
-      <div class="message-content">{{ item.message }}</div>
+      <div class="message-content" v-if="item.html" v-html="item.html"></div>
+      <div class="message-content" v-else>{{ item.message }}</div>
       <div class="message-time">{{ formatTime(item.timestamp) }}</div>
       <button class="btn-close" @click="emit('remove')">×</button>
 
@@ -119,6 +120,9 @@ onMounted(() => {
 
   .message-content {
     word-break: break-word;
+    :deep(a) {
+      color: #1e90ff;
+    }
   }
 
   .message-time {

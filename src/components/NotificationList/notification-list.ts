@@ -4,6 +4,7 @@ import NotificationList from './NotificationList.vue'
 export interface INotification {
   type: 'info' | 'warning' | 'success' | 'error'
   message: string
+  html: string
   timestamp: number
   timeout: number
 }

@@ -13,9 +13,12 @@ interface ISettings {
   floatUI: boolean
   enableKvmInput: boolean
   baudRate: string
+  // 鼠标定位模式，建议在Linux客户机下启用相对模式
   cursorMode: 'relative' | 'absolute'
   absMouseAreaHeight: number
   absMouseAreaWidth: number
+  // 键盘兼容模式，建议在Linux客户机下启用
+  keyboardCompatibleMode: boolean
 
   filterMirrorX: boolean
   filterMirrorY: boolean
@@ -39,6 +42,7 @@ export const useSettingsStore = defineStore('settingsStore', {
       cursorMode: 'absolute',
       absMouseAreaHeight: 100,
       absMouseAreaWidth: 100,
+      keyboardCompatibleMode: false,
 
       filterMirrorX: false,
       filterMirrorY: false,
