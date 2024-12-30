@@ -8,6 +8,7 @@ import {getVersion, uniOpenUrl} from '@/utils'
 const settingsStore = useSettingsStore()
 interface Props {
   visible: boolean
+  graphInfo?: any
 }
 
 const emit = defineEmits(['update:visible'])
@@ -35,6 +36,22 @@ onClickOutside(rootRef, (event) => {
 const kvmInputHelp = () => {
   uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
 }
+
+const showCursorModeTip = () => {
+  window.$notification({
+    type: 'info',
+    html: 'Linux and Android do not support absolute mouse. Please use relative mouse mode on these systems. Ref: <a href="https://www.wch.cn/bbs/thread-83322-1.html" target="_blank">[1]</a> <a href="https://www.wch.cn/bbs/thread-108708-1.html" target="_blank">[2]</a>',
+    timeout: 10000,
+  })
+}
+
+const showKeyboardCompatibleModeTip = () => {
+  window.$notification({
+    type: 'info',
+    html: 'It is recommended to enable this mode on Linux clients or when keystroke issues occur. This will break the ctrl+scroll wheel zoom functionality.',
+    timeout: 10000,
+  })
+}
 </script>
 
 <template>
@@ -51,14 +68,16 @@ const kvmInputHelp = () => {
       <div class="settings-content" @contextmenu.prevent>
         <div class="s-title" style="margin-top: 0">Video</div>
 
-        <code v-if="settingsStore.videoConfig">{{
-          `${settingsStore.videoConfig.width}x${settingsStore.videoConfig.height} ${parseFloat((settingsStore.videoConfig.frameRate || 0).toFixed(2))}fps`
-        }}</code>
+        <div v-if="settingsStore.videoConfig">
+          <code>{{
+            `${graphInfo.width}x${graphInfo.height} ${parseFloat((settingsStore.videoConfig.frameRate || 0).toFixed(2))}fps`
+          }}</code>
+        </div>
 
         <label title="Fit">
-          <span>Fit </span>
+          <span>Video Fit </span>
           <select style="flex: 1" v-model="settingsStore.fitMode" class="themed-input">
-            <option v-for="v in ['contain', 'cover', 'fill', 'none']" :key="v">{{ v }}</option>
+            <option v-for="v in ['contain', 'fill', 'cover', 'none']" :key="v">{{ v }}</option>
           </select>
         </label>
 
@@ -77,7 +96,7 @@ const kvmInputHelp = () => {
         <label class="cursor-pointer">
           <input type="checkbox" v-model="settingsStore.enableKvmInput" />
           <span>Enable KVM Input</span>
-          <button @click="kvmInputHelp" class="themed-button">CH340+CH9329 ❓</button>
+          <a href="javascript:" @click="kvmInputHelp">[CH9329 ?]</a>
         </label>
 
         <template v-if="settingsStore.enableKvmInput">
@@ -94,7 +113,14 @@ const kvmInputHelp = () => {
             </select>
           </label>
           <label>
-            <span>Cursor Mode</span>
+            <input type="checkbox" v-model="settingsStore.keyboardCompatibleMode" />
+            <span
+              >Keyboard Compatible Mode
+              <a href="javascript:" @click="showKeyboardCompatibleModeTip">[?]</a></span
+            >
+          </label>
+          <label>
+            <span>Cursor Mode <a href="javascript:" @click="showCursorModeTip">[?]</a></span>
 
             <select style="flex: 1" v-model="settingsStore.cursorMode" class="themed-input">
               <option v-for="v in ['relative', 'absolute']" :key="v">{{ v }}</option>
@@ -186,12 +212,12 @@ const kvmInputHelp = () => {
 
         <label>
           <span>Author: Canwdev</span>
-          <button
-            class="themed-button green"
+          <a
+            href="javascript:void(0);"
             @click="uniOpenUrl('https://github.com/canwdev/web-mediadevices-player')"
           >
-            Github
-          </button>
+            [Github]
+          </a>
         </label>
       </div>
     </div>
@@ -243,6 +269,10 @@ const kvmInputHelp = () => {
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    a {
+      color: #4caf50;
     }
   }
 }
