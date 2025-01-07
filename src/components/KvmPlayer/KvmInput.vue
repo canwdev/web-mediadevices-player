@@ -138,7 +138,7 @@ const sendText = async (text: string | null) => {
     ])
     // console.log({ char, hidCode, shift, value });
     await writeSerial(value)
-    await sleep(2)
+    await sleep(16)
   }
 }
 
@@ -327,7 +327,13 @@ watch(
 )
 
 const showSendInput = async () => {
-  const text = await createPrompt('', 'Send Text', {})
+  const text = await createPrompt('', 'Send Text', {
+    type: 'textarea',
+    inputProps: {
+      rows: 10,
+      cols: 50,
+    },
+  })
   sendText(text)
 }
 
@@ -407,6 +413,8 @@ const transferOptions = [
   {
     value: '',
     label: 'Text Transfer',
+    disabled: true,
+    hidden: true,
   },
   {
     value: 'send_text',
@@ -442,7 +450,7 @@ const handleTransferSelect = async () => {
 
 const selectedComboKey = ref('')
 const specialKeyOptions = [
-  {value: '', label: 'Select Combo Keys'},
+  {value: '', label: 'Select Combo Keys', disabled: true, hidden: true},
   {
     value: 'ctrl_alt_del',
     label: 'Ctrl + Alt + Del',
@@ -685,7 +693,13 @@ defineExpose({
       >
         <span class="mdi mdi-card-text"></span>
         <select v-model="selectedTransfer" class="btn-no-style" @change="handleTransferSelect">
-          <option v-for="item in transferOptions" :key="item.value" :value="item.value">
+          <option
+            v-for="item in transferOptions"
+            :disabled="item.disabled"
+            :hidden="item.hidden"
+            :key="item.value"
+            :value="item.value"
+          >
             {{ item.label }}
           </option>
         </select>
@@ -703,6 +717,7 @@ defineExpose({
             :key="item.value"
             :value="item.value"
             :disabled="item.disabled"
+            :hidden="item.hidden"
           >
             {{ item.label }}
           </option>
@@ -716,7 +731,7 @@ defineExpose({
       >
         <span class="mdi mdi-keyboard-close"></span>
         <select v-model="selectedMediaKey" class="btn-no-style" @change="handleSendMedialKey">
-          <option :value="''">Select Media Keys</option>
+          <option :value="''" disabled hidden>Select Media Keys</option>
           <optgroup label="ACPI">
             <option v-for="item in mediaKeyACPIOptions" :key="item.value" :value="item.value">
               {{ item.label }}

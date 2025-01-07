@@ -8,6 +8,7 @@ const props = withDefaults(
     value: string
     modelValue?: boolean
     closeOnClickOutside?: boolean
+    type: 'input' | 'textarea'
     inputProps?: any
     validator?: (value: string) => any
   }>(),
@@ -62,7 +63,16 @@ const handleOutsideClick = () => {
       >
         <div v-if="title" class="popup-title">{{ title }}</div>
 
+        <textarea
+          v-if="type === 'textarea'"
+          ref="inputRef"
+          class="themed-input"
+          v-bind="inputProps"
+          v-model="inputText"
+          required
+        />
         <input
+          v-else
           ref="inputRef"
           class="themed-input"
           v-bind="inputProps"

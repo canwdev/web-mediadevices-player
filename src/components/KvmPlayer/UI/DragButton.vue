@@ -69,7 +69,7 @@ const {docked} = toRefs(props)
   }
 
   &.docked {
-    opacity: 1;
+    opacity: 0.8;
     transform: translateY(0px);
     border-radius: 0 0 var(--radius) var(--radius);
     background-color: var(--bg);

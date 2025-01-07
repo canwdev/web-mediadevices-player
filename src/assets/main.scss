@@ -73,8 +73,8 @@ body {
 }
 
 .panel-blur-bg {
-  backdrop-filter: blur(10px);
-  background-color: rgba(0, 0, 0, 0.6);
+  //backdrop-filter: blur(10px);
+  background-color: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   color: white;
