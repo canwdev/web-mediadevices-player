@@ -651,8 +651,8 @@ const isActionBarVisible = computed(() => {
       opacity: 1;
 
       &.float-bar {
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.7);
+        //backdrop-filter: blur(10px);
         outline: 1px solid rgba(255, 255, 255, 0.1);
 
         border-radius: 100px;
