@@ -2,7 +2,6 @@
 import {ref, watch} from 'vue'
 import {useVModel} from '@vueuse/core'
 import {useSettingsStore} from '@/stores/settings'
-import {onClickOutside} from '@vueuse/core'
 import {getVersion, uniOpenUrl} from '@/utils'
 
 const settingsStore = useSettingsStore()
@@ -28,10 +27,6 @@ const filterOptions = [
 ]
 
 const rootRef = ref(null)
-
-onClickOutside(rootRef, (event) => {
-  mVisible.value = false
-})
 
 const kvmInputHelp = () => {
   uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
@@ -227,7 +222,7 @@ const showKeyboardCompatibleModeTip = () => {
 <style scoped lang="scss">
 .settings-prompt {
   position: fixed;
-  top: 10px;
+  top: 40px;
   left: 50%;
   padding: 10px;
   z-index: 100;

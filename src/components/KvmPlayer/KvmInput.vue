@@ -114,31 +114,37 @@ const closeSerial = () => {
 }
 onBeforeUnmount(() => {
   // closeSerial()
+  // closeSerial()
+  // closeSerial()
 })
 
 const sendText = async (text: string | null) => {
   if (!text) {
     return
   }
+  const errorChars = []
   // switch to the ascii mode of ch9329 needs reconnect, which is unacceptable
   for (const key of text) {
     if (!ASCII_KEYS.has(key)) {
-      window.$notification({
-        type: 'error',
-        message: `char [ ${key} ] is not an ascii char`,
-        timeout: 3000,
-      })
-      return
+      errorChars.push(key)
+      continue
     }
     const [hidCode, shift] = ASCII_KEYS.get(key)
-    // there's a faster strategy, press down 6 keys before release. however this will cause adjacent same chars to be wrong, like "root" became "rot"
+    // console.log({key, hidCode, shift})
     const value = new Uint8Array([
       ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, shift ? 2 : 0, 0, hidCode, 0, 0, 0, 0, 0),
       ...genPacket(CmdType.CMD_SEND_KB_GENERAL_DATA, 0, 0, 0, 0, 0, 0, 0, 0),
     ])
-    // console.log({ char, hidCode, shift, value });
     await writeSerial(value)
     await sleep(16)
+  }
+
+  if (errorChars.length) {
+    window.$notification({
+      type: 'error',
+      message: `[${errorChars.join(', ')}] send failed, only ASCII char is allowed.`,
+      timeout: 3000,
+    })
   }
 }
 
@@ -239,6 +245,7 @@ const releaseAbsoluteMouse = () => {
   document.removeEventListener('wheel', handleRelativeMouseWheel)
 }
 onBeforeUnmount(() => {
+  handleKeyup()
   releaseAbsoluteMouse()
 })
 const bindAbsoluteMouse = (absEl) => {
