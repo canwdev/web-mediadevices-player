@@ -16,6 +16,7 @@ import {
 import {useSettingsStore} from '@/stores/settings'
 import {sleep} from '@/components/KvmPlayer/utils'
 import {eventBus} from '@/utils/event-bus'
+import {SerialPort} from 'web-serial-polyfill'
 
 const emit = defineEmits(['connected', 'disconnected'])
 
@@ -60,7 +61,7 @@ const initSerial = async () => {
     return
   }
   try {
-    let port = null
+    let port: SerialPort
     if (navigator?.serial?.requestPort) {
       port = await navigator.serial.requestPort()
     } else if (navigator?.usb?.requestDevice) {
@@ -151,9 +152,7 @@ const sendText = async (text: string | null) => {
 const rootRef = ref()
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock
-const {isSupported, lock, unlock, element, triggerElement} = usePointerLock(rootRef, {
-  unadjustedMovement: true,
-})
+const {lock, unlock} = usePointerLock(rootRef, {})
 
 const handleRelativeMouseWheel = async (event: WheelEvent) => {
   event.preventDefault() // 阻止默认的缩放行为
@@ -181,6 +180,7 @@ useEventListener(document, 'pointerlockchange', (event) => {
     return
   }
   console.log('Enter pointer lock', event, document.pointerLockElement)
+
   const el = rootRef.value
 
   let [pressedBits, x, y] = [0, 0, 0]
@@ -354,9 +354,14 @@ const handleKeydown = async (event: KeyboardEvent) => {
 
   // console.log(event)
   // 按下 ctrl+alt 解锁鼠标
-  if (event.ctrlKey && event.altKey) {
-    await unlock()
-  }
+  // if (event.ctrlKey && event.altKey) {
+  // await unlock()
+  // }
+
+  // 按下right ctrl 解锁
+  // if (event.code === 'ControlRight') {
+  //   await unlock()
+  // }
 
   const isCompatibleMode = settingsStore.keyboardCompatibleMode
 
@@ -428,6 +433,14 @@ const transferOptions = [
     label: 'Send Text...',
     action() {
       showSendInput()
+    },
+  },
+  {
+    value: 'send_clipboard',
+    label: 'Send Clipboard',
+    async action() {
+      const text = await navigator.clipboard.readText()
+      sendText(text)
     },
   },
   {

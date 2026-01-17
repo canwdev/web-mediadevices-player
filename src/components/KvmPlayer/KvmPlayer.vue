@@ -1,9 +1,3 @@
-<script lang="ts">
-export default {
-  name: 'KvmPlayer',
-}
-</script>
-
 <script setup lang="ts">
 import {onMounted, ref, computed, shallowRef, onBeforeUnmount, watch} from 'vue'
 import {useFullscreen, usePermission, useStorage} from '@vueuse/core'
@@ -13,7 +7,6 @@ import {VideoRecorder} from './utils/video-recorder'
 import {type IVideoConfig, useSettingsStore} from '@/stores/settings'
 import SettingsPrompt from '@/components/KvmPlayer/SettingsPrompt.vue'
 import KvmInput from '@/components/KvmPlayer/KvmInput.vue'
-import {CursorHider} from '@/components/KvmPlayer/utils/cursor-hider'
 import moment from 'moment/moment'
 import QRScanner from '@/components/KvmPlayer/QRScanner.vue'
 import {useActionBar} from '@/components/KvmPlayer/hooks/use-action-bar'
@@ -362,7 +355,7 @@ const enterInputMode = () => {
   if (!kvmInputRef.value) {
     return
   }
-  kvmInputRef.value.autoEnable(absMouseRef.value)
+  kvmInputRef.value.autoEnable(absMouseRef.value, rootRef.value)
 }
 
 const isFolded = useStorage('wmd__actions_is_folded', false)

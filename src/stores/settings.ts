@@ -38,7 +38,7 @@ export const useSettingsStore = defineStore('settingsStore', {
       fitMode: 'contain',
       floatUI: true,
       enableKvmInput: false,
-      baudRate: '',
+      baudRate: '9600',
       cursorMode: 'absolute',
       absMouseAreaHeight: 100,
       absMouseAreaWidth: 100,
