@@ -1,14 +1,9 @@
-name: Tauri Auto Build
-#on:
-#  push:
-#    branches: [ "tauri-auto-build" ]
-#  pull_request:
-#    branches: [ "tauri-auto-build" ]
+name: Build Tauri App
 
 on:
-  push:
-    tags:
-      - 'v*'
+  # push:
+  #   tags:
+  #     - 'v*'
   workflow_dispatch:
 
 jobs:

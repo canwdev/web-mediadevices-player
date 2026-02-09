@@ -25,6 +25,7 @@
     "pinia-plugin-persistedstate": "^3.2.3",
     "sass": "^1.97.2",
     "vue": "^3.5.26",
+    "vue-i18n": "^11.2.8",
     "vue-router": "^4.6.4",
     "web-serial-polyfill": "^1.0.15"
   },
