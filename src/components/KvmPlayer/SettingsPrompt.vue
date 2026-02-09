@@ -3,6 +3,10 @@ import {useVModel, onKeyStroke} from '@vueuse/core'
 import {useSettingsStore} from '@/stores/settings'
 import {getVersion, uniOpenUrl} from '@/utils'
 
+import {useI18n} from 'vue-i18n'
+import {localeList, localeRef} from '@/i18n'
+
+const {t: $t} = useI18n()
 const settingsStore = useSettingsStore()
 interface Props {
   visible: boolean
@@ -23,13 +27,13 @@ onKeyStroke('Escape', (e) => {
 })
 
 const filterOptions = [
-  {value: 'grayscale(1)', label: 'Grayscale'},
-  {value: 'sepia(1)', label: 'Sepia'},
-  {value: 'contrast(3)', label: 'Contrast'},
-  {value: 'hue-rotate(90deg)', label: 'Hue rotate'},
-  {value: 'blur(10px)', label: 'Blur'},
-  {value: 'invert(1)', label: 'Invert'},
-  {value: 'brightness(2)', label: 'Brightness'},
+  {value: 'grayscale(1)', label: $t('app.grayscale')},
+  {value: 'sepia(1)', label: $t('app.sepia')},
+  {value: 'contrast(3)', label: $t('app.contrast')},
+  {value: 'hue-rotate(90deg)', label: $t('app.hue_rotate')},
+  {value: 'blur(10px)', label: $t('app.blur')},
+  {value: 'invert(1)', label: $t('app.invert')},
+  {value: 'brightness(2)', label: $t('app.brightness')},
 ]
 
 const kvmInputHelp = () => {
@@ -39,7 +43,9 @@ const kvmInputHelp = () => {
 const showCursorModeTip = () => {
   window.$notification({
     type: 'info',
-    html: 'Linux and Android do not support absolute mouse. Please use relative mouse mode on these systems. Ref: <a href="https://www.wch.cn/bbs/thread-83322-1.html" target="_blank">[1]</a> <a href="https://www.wch.cn/bbs/thread-108708-1.html" target="_blank">[2]</a>',
+    html:
+      $t('app.linux_and_android_do_not_support') +
+      'Ref: <a href="https://www.wch.cn/bbs/thread-83322-1.html" target="_blank">[1]</a> <a href="https://www.wch.cn/bbs/thread-108708-1.html" target="_blank">[2]</a>',
     timeout: 10000,
   })
 }
@@ -47,7 +53,7 @@ const showCursorModeTip = () => {
 const showKeyboardCompatibleModeTip = () => {
   window.$notification({
     type: 'info',
-    html: 'It is recommended to enable this mode on Linux clients or when keystroke issues occur. This will break the ctrl+scroll wheel zoom functionality.',
+    html: $t('app.it_is_recommended_to_enable_this'),
     timeout: 10000,
   })
 }
@@ -60,7 +66,7 @@ const showKeyboardCompatibleModeTip = () => {
         <button class="btn-close btn-no-style" @click="mVisible = !mVisible">×</button>
 
         <div class="settings-content" @contextmenu.prevent>
-          <div class="s-title" style="margin-top: 0">Video</div>
+          <div class="s-title" style="margin-top: 0">{{ $t('app.video') }}</div>
 
           <div v-if="settingsStore.videoConfig">
             <code>{{
@@ -68,8 +74,8 @@ const showKeyboardCompatibleModeTip = () => {
             }}</code>
           </div>
 
-          <label title="Fit">
-            <span>Video Fit </span>
+          <label :title="$t('app.fit')">
+            <span>{{ $t('app.video_fit') }}</span>
             <select style="flex: 1" v-model="settingsStore.fitMode" class="themed-input">
               <option v-for="v in ['contain', 'fill', 'cover', 'none']" :key="v">{{ v }}</option>
             </select>
@@ -82,20 +88,20 @@ const showKeyboardCompatibleModeTip = () => {
 
           <label class="cursor-pointer">
             <input type="checkbox" v-model="settingsStore.floatUI" />
-            <span>Float UI</span>
+            <span>{{ $t('app.float_ui') }}</span>
           </label>
 
-          <div class="s-title">KVM Settings</div>
+          <div class="s-title">{{ $t('app.kvm_settings') }}</div>
 
           <label class="cursor-pointer">
             <input type="checkbox" v-model="settingsStore.enableKvmInput" />
-            <span>Enable KVM Input</span>
+            <span>{{ $t('app.enable_kvm_input') }}</span>
             <a href="javascript:" @click="kvmInputHelp">[CH9329 ?]</a>
           </label>
 
           <template v-if="settingsStore.enableKvmInput">
             <label>
-              <span>Baud Rate</span>
+              <span>{{ $t('app.baud_rate') }}</span>
               <select style="flex: 1" v-model="settingsStore.baudRate" class="themed-input">
                 <option
                   v-for="v in [1200, 2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200]"
@@ -109,12 +115,15 @@ const showKeyboardCompatibleModeTip = () => {
             <label>
               <input type="checkbox" v-model="settingsStore.keyboardCompatibleMode" />
               <span
-                >Keyboard Compatible Mode
-                <a href="javascript:" @click="showKeyboardCompatibleModeTip">[?]</a></span
+                >{{ $t('app.keyboard_compatible_mode')
+                }}<a href="javascript:" @click="showKeyboardCompatibleModeTip">[?]</a></span
               >
             </label>
             <label>
-              <span>Cursor Mode <a href="javascript:" @click="showCursorModeTip">[?]</a></span>
+              <span
+                >{{ $t('app.cursor_mode')
+                }}<a href="javascript:" @click="showCursorModeTip">[?]</a></span
+              >
 
               <select style="flex: 1" v-model="settingsStore.cursorMode" class="themed-input">
                 <option v-for="v in ['relative', 'absolute']" :key="v">{{ v }}</option>
@@ -131,7 +140,7 @@ const showKeyboardCompatibleModeTip = () => {
                   v-model="settingsStore.absMouseAreaWidth"
                   :min="0"
                   :max="100"
-                  placeholder="Width %"
+                  :placeholder="$t('app.width')"
                 />%
               </label>
               <label>
@@ -143,29 +152,29 @@ const showKeyboardCompatibleModeTip = () => {
                   v-model="settingsStore.absMouseAreaHeight"
                   :min="0"
                   :max="100"
-                  placeholder="Height %"
+                  :placeholder="$t('app.height')"
                 />%
               </label>
             </div>
           </template>
 
-          <div class="s-title cursor-help" title="Filter will not apply to screenshot/record">
-            CSS Filter
+          <div class="s-title cursor-help" :title="$t('app.filter_will_not_apply_to_screens')">
+            {{ $t('app.css_filter') }}
           </div>
 
           <label class="cursor-pointer">
             <input type="checkbox" v-model="settingsStore.filterMirrorY" />
-            <span>Horizontal Mirror</span>
+            <span>{{ $t('app.horizontal_mirror') }}</span>
           </label>
 
           <label class="cursor-pointer">
             <input type="checkbox" v-model="settingsStore.filterMirrorX" />
-            <span>Vertical Mirror</span>
+            <span>{{ $t('app.vertical_mirror') }}</span>
           </label>
 
           <label class="cursor-pointer">
             <input type="checkbox" v-model="settingsStore.filterShowFg" />
-            <span>Pattern</span>
+            <span>{{ $t('app.pattern') }}</span>
           </label>
 
           <label
@@ -193,19 +202,26 @@ const showKeyboardCompatibleModeTip = () => {
             <input
               class="themed-input font-code"
               v-model="settingsStore.inputFilter"
-              placeholder="CSS Filter Code"
+              :placeholder="$t('app.css_filter_code')"
             />
           </label>
 
-          <div class="s-title">About</div>
+          <div class="s-title">{{ $t('app.about') }}</div>
 
           <label>
-            <span>Version:</span>
+            <span>Language</span>
+            <select style="flex: 1" v-model="localeRef" class="themed-input">
+              <option v-for="v in localeList" :key="v.value" :value="v.value">{{ v.label }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>{{ $t('app.version') }}:</span>
             {{ getVersion() }}
           </label>
 
           <label>
-            <span>Author: Canwdev</span>
+            <span>{{ $t('app.author') }}: Canwdev</span>
             <a
               href="javascript:void(0);"
               @click="uniOpenUrl('https://github.com/canwdev/web-mediadevices-player')"
@@ -219,7 +235,7 @@ const showKeyboardCompatibleModeTip = () => {
   </transition>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .settings-mask {
   position: fixed;
   inset: 0;

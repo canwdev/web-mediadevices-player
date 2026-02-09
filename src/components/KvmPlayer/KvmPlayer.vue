@@ -12,6 +12,9 @@ import QRScanner from '@/components/KvmPlayer/QRScanner.vue'
 import {useActionBar} from '@/components/KvmPlayer/hooks/use-action-bar'
 import DragButton from '@/components/KvmPlayer/UI/DragButton.vue'
 
+import {useI18n} from 'vue-i18n'
+
+const {t: $t} = useI18n()
 const getEnumerateDevices = async () => {
   if (!navigator.mediaDevices?.enumerateDevices) {
     throw new Error('enumerateDevices() not supported.')
@@ -53,7 +56,7 @@ const audioDeviceList = computed(() => {
 
 const updateDeviceList = async () => {
   try {
-    loadingText.value = 'Updating Device List...'
+    loadingText.value = $t('app.updating_device_list')
     // console.log('updateDeviceList1')
     deviceList.value = await getEnumerateDevices()
     // console.log('updateDeviceList2')
@@ -91,7 +94,7 @@ const requirePermission = () => {
 
 const initDevices = async () => {
   try {
-    loadingText.value = 'Initializing devices...'
+    loadingText.value = $t('app.initializing_devices')
 
     if (settingsStore.currentVideoDeviceId || settingsStore.currentAudioDeviceId) {
       await startMediaStream()
@@ -149,7 +152,7 @@ const graphInfo = ref({
  */
 const startMediaStream = async () => {
   try {
-    loadingText.value = 'Starting MediaStream...'
+    loadingText.value = $t('app.starting_media_stream')
 
     const videoId = settingsStore.currentVideoDeviceId
     const audioId = settingsStore.currentAudioDeviceId
@@ -288,7 +291,7 @@ const {toggle: toggleFullScreen, isFullscreen} = useFullscreen(rootRef)
  */
 const handleStartStreamingCaptureScreen = async () => {
   try {
-    loadingText.value = 'Starting Capture Screen...'
+    loadingText.value = $t('app.starting_capture_screen')
     clearSelect()
     stopMediaStreaming()
     const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -396,7 +399,7 @@ const isActionBarVisible = computed(() => {
               <label
                 class="select-label-wrapper"
                 for="videoSelect"
-                title="Select Video Device"
+                :title="$t('app.select_video_device')"
                 :class="{activated: settingsStore.currentVideoDeviceId}"
               >
                 <span class="mdi mdi-monitor"></span>
@@ -429,7 +432,7 @@ const isActionBarVisible = computed(() => {
               <label
                 class="select-label-wrapper"
                 for="audioSelect"
-                title="Select Audio Device"
+                :title="$t('app.select_audio_device')"
                 :class="{activated: settingsStore.currentAudioDeviceId}"
               >
                 <span class="mdi mdi-speaker"></span>
@@ -463,23 +466,27 @@ const isActionBarVisible = computed(() => {
                 class="btn-no-style orange"
                 @click="stopMediaStreaming"
                 v-if="isStreaming"
-                title="⏹ Stop Media Devices"
+                :title="$t('app.stop_media_devices')"
               >
                 <span class="mdi mdi-stop-circle-outline"></span>
               </button>
               <button
                 class="btn-no-style green"
-                title="▶ Start Media Devices"
+                :title="$t('app.start_media_devices')"
                 @click="handleStartStreaming"
                 v-else
               >
                 <span class="mdi mdi-play-circle-outline"></span>
               </button>
-              <button class="btn-no-style" @click="clearSelect" title="🛑 Reset All Media Devices">
+              <button
+                class="btn-no-style"
+                @click="clearSelect"
+                :title="$t('app.reset_all_media_devices')"
+              >
                 <span class="mdi mdi-close-circle-outline"></span>
               </button>
 
-              <button title="More" class="btn-no-style" @click="isFolded = !isFolded">
+              <button :title="$t('app.more')" class="btn-no-style" @click="isFolded = !isFolded">
                 <span v-if="!isFolded" class="mdi mdi-chevron-left"></span>
                 <span v-else class="mdi mdi-chevron-right"></span>
               </button>
@@ -489,7 +496,7 @@ const isActionBarVisible = computed(() => {
                   <button
                     class="btn-no-style"
                     @click="handleStartStreamingCaptureScreen"
-                    title="🖥️ Capture Screen..."
+                    :title="$t('app.capture_screen')"
                   >
                     <span class="mdi mdi-cast-variant"></span>
                   </button>
@@ -500,7 +507,7 @@ const isActionBarVisible = computed(() => {
                     class="btn-no-style"
                     @click="handleScreenshot"
                     :disabled="!isStreaming"
-                    title="📷 Screenshot"
+                    :title="$t('app.screenshot')"
                   >
                     <span class="mdi mdi-monitor-screenshot"></span>
                   </button>
@@ -510,7 +517,7 @@ const isActionBarVisible = computed(() => {
                       class="btn-no-style recording"
                       v-if="Boolean(videoRecorder.mediaRecorder)"
                       @click="videoRecorder.stop()"
-                      title="📹 Recording, click to save record"
+                      :title="$t('app.recording_click_to_save_record')"
                     >
                       <span class="mdi mdi-record"></span>
                     </button>
@@ -519,7 +526,7 @@ const isActionBarVisible = computed(() => {
                       class="btn-no-style"
                       @click="videoRecorder.start()"
                       :disabled="!isStreaming"
-                      title="📹 Record"
+                      :title="$t('app.record')"
                     >
                       <span class="mdi mdi-record-circle-outline"></span>
                     </button>
@@ -541,14 +548,18 @@ const isActionBarVisible = computed(() => {
               <span style="opacity: 0.5">|</span>
             </template>
 
-            <button @click="showSettings = !showSettings" title="Settings" class="btn-no-style">
+            <button
+              @click="showSettings = !showSettings"
+              :title="$t('app.settings')"
+              class="btn-no-style"
+            >
               <span class="mdi mdi-cog"></span>
             </button>
             <button
               v-if="!isTauri"
               @click="toggleFullScreen"
               class="btn-no-style"
-              title="Fullscreen"
+              :title="$t('app.fullscreen')"
             >
               <span v-if="!isFullscreen" class="mdi mdi-fullscreen"></span>
               <span v-else class="mdi mdi-fullscreen-exit"></span>

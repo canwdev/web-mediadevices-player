@@ -1,9 +1,12 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import QrcodeDecoder from '@/components/KvmPlayer/utils/qrcode-decoder'
 import {copy} from '@/components/KvmPlayer/utils'
 import {onBeforeUnmount, onMounted, ref} from 'vue'
 import {eventBus} from '@/utils/event-bus'
 
+import {useI18n} from 'vue-i18n'
+
+const {t: $t} = useI18n()
 const isLoading = ref()
 let qr: QrcodeDecoder | null = null
 const startScan = async () => {
@@ -117,7 +120,7 @@ onBeforeUnmount(() => {
 <template>
   <button
     class="btn-qr-scanner btn-no-style"
-    title="QR Code Scanner, right click upload image to decode"
+    :title="$t('app.qr_code_scanner_right_click_uplo')"
     :class="{active: isLoading}"
     @click="startScan"
     @contextmenu.prevent="startScanUploadImage"
