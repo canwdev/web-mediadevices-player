@@ -156,7 +156,8 @@ const rootRef = ref()
 // https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock
 const {lock, unlock} = usePointerLock(rootRef, {})
 
-const handleRelativeMouseWheel = async (event: WheelEvent) => {
+const handleRelativeMouseWheel = useThrottleFn(async (event: WheelEvent) => {
+  if (!serialPort.value) return
   event.preventDefault() // 阻止默认的缩放行为
   // event.deltaY 表示滚动距离
   let value
@@ -169,7 +170,7 @@ const handleRelativeMouseWheel = async (event: WheelEvent) => {
     value = new Uint8Array(genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, 0, 0, 0, 0x02))
   }
   await writeSerial(value)
-}
+}, 16)
 
 // 鼠标锁定，相对鼠标模式
 useEventListener(document, 'pointerlockchange', (event) => {
@@ -193,6 +194,7 @@ useEventListener(document, 'pointerlockchange', (event) => {
     el.onmousedown =
     el.onmouseup =
       (event: MouseEvent) => {
+        if (!serialPort.value || !writer.value) return
         /*        const pressedBits = event.buttons // so lucky, coincidence or necessity?
         const x = Math.round(event.movementX)
         const y = Math.round(event.movementY)
@@ -283,6 +285,7 @@ const bindAbsoluteMouse = (absEl) => {
     absEl.onmousedown =
     absEl.onmouseup =
       (event: MouseEvent) => {
+        if (!serialPort.value || !writer.value) return
         event.preventDefault()
         event.stopPropagation()
 
@@ -352,6 +355,16 @@ const handleKeydown = async (event: KeyboardEvent) => {
   if (!serialPort.value) {
     return
   }
+
+  // 避免在输入框中触发 KVM 按键
+  if (
+    event.target instanceof HTMLInputElement ||
+    event.target instanceof HTMLTextAreaElement ||
+    (event.target as HTMLElement)?.isContentEditable
+  ) {
+    return
+  }
+
   event.preventDefault()
 
   // 注意：无法阻止 esc 退出全屏

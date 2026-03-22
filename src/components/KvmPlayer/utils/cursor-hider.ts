@@ -1,3 +1,5 @@
+import {useThrottleFn} from '@vueuse/core'
+
 type showHideFnType = (arg0: {el: HTMLElement; isShow: boolean}) => void
 
 // 鼠标自动隐藏工具
@@ -6,6 +8,7 @@ export class CursorHider {
   private targetEl: HTMLElement
   private showHideFn: showHideFnType
   private time: number
+  private throttledShowCursor: any
 
   constructor(cursorSelector: string, showHideFn: showHideFnType, time = 1000) {
     this.timeoutID = null
@@ -14,6 +17,7 @@ export class CursorHider {
     this.time = time
     this.showCursor = this.showCursor.bind(this)
     this.handlePointerLockChange = this.handlePointerLockChange.bind(this)
+    this.throttledShowCursor = useThrottleFn(this.showCursor, 100)
 
     this.start()
   }
@@ -57,13 +61,13 @@ export class CursorHider {
 
   start() {
     document.addEventListener('pointerlockchange', this.handlePointerLockChange)
-    document.addEventListener('mousemove', this.showCursor)
+    document.addEventListener('mousemove', this.throttledShowCursor)
     this.runTimer()
   }
 
   stop() {
     document.removeEventListener('pointerlockchange', this.handlePointerLockChange)
-    document.removeEventListener('mousemove', this.showCursor)
+    document.removeEventListener('mousemove', this.throttledShowCursor)
     clearTimeout(this.timeoutID)
     this.showHideFn({el: this.targetEl, isShow: true})
   }

@@ -332,13 +332,16 @@ onMounted(() => {
 const showSettings = ref(false)
 
 const videoFilterStyle = computed(() => {
-  const style: any = {}
+  const style: any = {
+    willChange: 'filter, transform',
+    transform: 'translateZ(0)',
+  }
   if (settingsStore.filterMirrorX && settingsStore.filterMirrorY) {
-    style.transform = `rotateX(180deg) rotateY(180deg)`
+    style.transform += ` rotateX(180deg) rotateY(180deg)`
   } else if (settingsStore.filterMirrorX) {
-    style.transform = `rotateX(180deg)`
+    style.transform += ` rotateX(180deg)`
   } else if (settingsStore.filterMirrorY) {
-    style.transform = `rotateY(180deg)`
+    style.transform += ` rotateY(180deg)`
   }
   if (settingsStore.inputFilter) {
     style.filter = settingsStore.inputFilter
@@ -854,7 +857,12 @@ const isActionBarVisible = computed(() => {
     video {
       width: 100%;
       height: 100%;
-      transition: all 1s;
+      transition:
+        transform 1s,
+        opacity 1s,
+        filter 1s;
+      object-position: center;
+      background-color: transparent;
     }
 
     .abs-mouse-container {
@@ -922,6 +930,8 @@ const isActionBarVisible = computed(() => {
     z-index: 2;
     background-size: 4px 4px;
     pointer-events: none;
+    will-change: opacity;
+    transform: translateZ(0);
   }
 
   .loading-layer {

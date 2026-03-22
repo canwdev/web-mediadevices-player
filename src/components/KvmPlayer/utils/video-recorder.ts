@@ -38,7 +38,7 @@ export class VideoRecorder {
     }
 
     this.recordedChunks = []
-    this.mediaRecorder.start(10)
+    this.mediaRecorder.start(1000)
     console.log('record start', this.mediaRecorder)
   }
 
