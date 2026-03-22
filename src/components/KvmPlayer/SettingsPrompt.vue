@@ -332,7 +332,7 @@ function showCursorModeTip() {
     label {
       gap: 2px;
     }
-    input {
+    input[type="number"] {
       width: 60px;
     }
   }

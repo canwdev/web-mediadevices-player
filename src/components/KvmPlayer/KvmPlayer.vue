@@ -172,7 +172,6 @@ async function startMediaStream() {
 
     let vConfig: IVideoConfig | undefined
 
-
     if (videoId) {
       // 如果保存的id不匹配，则重新获取配置
       if (!settingsStore.videoConfig || settingsStore.videoConfig.deviceId !== videoId) {
@@ -349,13 +348,13 @@ const showSettings = ref(false)
 const videoFilterStyle = computed(() => {
   const style: any = {}
   if (settingsStore.filterMirrorX && settingsStore.filterMirrorY) {
-    style.transform += ` rotateX(180deg) rotateY(180deg)`
+    style.transform = `rotateX(180deg) rotateY(180deg)`
   }
   else if (settingsStore.filterMirrorX) {
-    style.transform += ` rotateX(180deg)`
+    style.transform = `rotateX(180deg)`
   }
   else if (settingsStore.filterMirrorY) {
-    style.transform += ` rotateY(180deg)`
+    style.transform = `rotateY(180deg)`
   }
   if (settingsStore.inputFilter) {
     style.filter = settingsStore.inputFilter
