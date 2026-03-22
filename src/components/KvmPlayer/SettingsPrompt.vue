@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onKeyStroke, useVModel } from '@vueuse/core'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { localeList, localeRef } from '@/i18n'
 
+import { localeList, localeRef } from '@/i18n'
 import { useSettingsStore } from '@/stores/settings'
 import { getVersion, uniOpenUrl } from '@/utils'
 
@@ -26,7 +27,7 @@ onKeyStroke('Escape', (e) => {
   }
 })
 
-const filterOptions = [
+const filterOptions = computed(() => [
   { value: 'grayscale(1)', label: $t('app.grayscale') },
   { value: 'sepia(1)', label: $t('app.sepia') },
   { value: 'contrast(3)', label: $t('app.contrast') },
@@ -34,7 +35,7 @@ const filterOptions = [
   { value: 'blur(10px)', label: $t('app.blur') },
   { value: 'invert(1)', label: $t('app.invert') },
   { value: 'brightness(2)', label: $t('app.brightness') },
-]
+])
 
 function kvmInputHelp() {
   uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
@@ -175,45 +176,47 @@ function showCursorModeTip() {
             </div>
           </template>
 
-          <div class="s-title cursor-help" :title="$t('app.filter_will_not_apply_to_screens')">
+          <div class="s-title cursor-he">
             {{ $t('app.css_filter') }}
+            <a a href="javascript:" @click="showTips($t('app.filter_will_not_apply_to_screens'))">[?]</a>
           </div>
 
-          <label class="cursor-pointer">
-            <input v-model="settingsStore.filterMirrorY" type="checkbox">
-            <span>{{ $t('app.horizontal_mirror') }}</span>
-          </label>
+          <div class="control-flex-group">
+            <label class="cursor-pointer">
+              <input v-model="settingsStore.filterMirrorY" type="checkbox">
+              <span>{{ $t('app.horizontal_mirror') }}</span>
+            </label>
 
-          <label class="cursor-pointer">
-            <input v-model="settingsStore.filterMirrorX" type="checkbox">
-            <span>{{ $t('app.vertical_mirror') }}</span>
-          </label>
+            <label class="cursor-pointer">
+              <input v-model="settingsStore.filterMirrorX" type="checkbox">
+              <span>{{ $t('app.vertical_mirror') }}</span>
+            </label>
 
-          <label class="cursor-pointer">
-            <input v-model="settingsStore.filterShowFg" type="checkbox">
-            <span>{{ $t('app.pattern') }}</span>
-          </label>
+            <label class="cursor-pointer">
+              <input v-model="settingsStore.filterShowFg" type="checkbox">
+              <span>{{ $t('app.pattern') }}</span>
+            </label>
 
-          <label
-            v-for="option in filterOptions"
-            :key="option.value"
-            :for="option.label + option.value"
-            class="cursor-pointer"
-            style="font-style: italic; font-weight: 500"
-            :title="option.value"
-            @contextmenu.prevent="settingsStore.inputFilter += ` ${option.value}`"
-          >
-            <input
-              :id="option.label + option.value"
-              v-model="settingsStore.selectedFilters"
-              type="checkbox"
-              name="filter"
-              :value="option.value"
-              :disabled="!!settingsStore.inputFilter"
+            <label
+              v-for="option in filterOptions"
+              :key="option.value"
+              :for="option.label + option.value"
+              class="cursor-pointer"
+              style="font-style: italic; font-weight: 500"
+              :title="option.value"
+              @contextmenu.prevent="settingsStore.inputFilter += ` ${option.value}`"
             >
-            <span>{{ option.label }}</span>
-          </label>
-
+              <input
+                :id="option.label + option.value"
+                v-model="settingsStore.selectedFilters"
+                type="checkbox"
+                name="filter"
+                :value="option.value"
+                :disabled="!!settingsStore.inputFilter"
+              >
+              <span>{{ option.label }}</span>
+            </label>
+          </div>
           <label style="font-style: italic; font-weight: 500">
             <span>filter:</span>
             <input
@@ -309,6 +312,16 @@ function showCursorModeTip() {
 
     a {
       color: #4caf50;
+    }
+  }
+
+  .control-flex-group {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 250px;
+    gap: 6px;
+    label {
+      gap: 2px;
     }
   }
 }

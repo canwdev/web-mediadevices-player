@@ -67,6 +67,7 @@
     "fit": "Fit",
     "video_fit": "Video Fit",
     "float_ui": "Float UI",
+    "max_frame_rate": "Max Frame Rate",
     "kvm_settings": "KVM Settings",
     "enable_kvm_input": "Enable KVM Input",
     "auto_connect_kvm": "Auto Connect Serial",

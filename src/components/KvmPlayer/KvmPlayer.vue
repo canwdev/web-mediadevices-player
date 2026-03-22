@@ -353,10 +353,7 @@ onMounted(() => {
 const showSettings = ref(false)
 
 const videoFilterStyle = computed(() => {
-  const style: any = {
-    willChange: 'filter, transform',
-    transform: 'translateZ(0)',
-  }
+  const style: any = {}
   if (settingsStore.filterMirrorX && settingsStore.filterMirrorY) {
     style.transform += ` rotateX(180deg) rotateY(180deg)`
   }
@@ -906,10 +903,6 @@ const isActionBarVisible = computed(() => {
     video {
       width: 100%;
       height: 100%;
-      transition:
-        transform 1s,
-        opacity 1s,
-        filter 1s;
       object-position: center;
       background-color: transparent;
     }
