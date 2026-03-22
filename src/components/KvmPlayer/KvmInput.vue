@@ -352,6 +352,8 @@ const handleKeydown = async (event: KeyboardEvent) => {
   }
   event.preventDefault()
 
+  // 注意：无法阻止 esc 退出全屏
+
   // console.log(event)
   // 按下 ctrl+alt 解锁鼠标
   // if (event.ctrlKey && event.altKey) {
