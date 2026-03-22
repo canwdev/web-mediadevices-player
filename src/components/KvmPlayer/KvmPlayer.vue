@@ -172,6 +172,7 @@ async function startMediaStream() {
 
     let vConfig: IVideoConfig | undefined
 
+
     if (videoId) {
       // 如果保存的id不匹配，则重新获取配置
       if (!settingsStore.videoConfig || settingsStore.videoConfig.deviceId !== videoId) {
@@ -181,8 +182,8 @@ async function startMediaStream() {
         console.log('vDevice', vDevice)
 
         if (vDevice) {
-          // @ts-expect-error
-          const conf = vDevice.getCapabilities()
+          // InputDeviceInfo.getCapabilities() is supported in Chrome
+          const conf = typeof (vDevice as any).getCapabilities === 'function' ? (vDevice as any).getCapabilities() : {}
           // console.log(conf)
           settingsStore.videoConfig = {
             deviceId: conf.deviceId,
@@ -203,36 +204,29 @@ async function startMediaStream() {
 
     console.log('vConfig', vConfig)
 
-    const constraints = {
-      // audio: true,
+    const constraints: any = {
       audio: audioId
         ? {
-            deviceId: audioId,
+            deviceId: { exact: audioId },
             autoGainControl: false,
             echoCancellation: false,
             noiseSuppression: false,
           }
         : false,
-      // audio: {
-      //   channelCount: 1,
-      //   sampleRate: 16000,
-      //   sampleSize: 16,
-      //   volume: 1
-      // },
-      // video: {
-      //   deviceId: videoId,
-      //   width: { min: 1280, ideal: 1920, max: 2560 },
-      //   height: { min: 720, ideal: 1080, max: 1440 },
-      //   frameRate: { ideal: 30, max: 60 }
-      // },
-      video: vConfig,
+      video: {
+        ...vConfig,
+        deviceId: { exact: videoId },
+      },
     }
 
     const stream = await navigator.mediaDevices.getUserMedia(constraints)
     mediaStreamRef.value = stream
-    console.log('stream', stream)
+    console.log('[startMediaStream] Stream updated:', stream.id)
 
     const video = videoRef.value
+    if (video.srcObject) {
+      video.srcObject = null
+    }
     video.srcObject = stream
     video.onloadedmetadata = () => {
       video.play()
