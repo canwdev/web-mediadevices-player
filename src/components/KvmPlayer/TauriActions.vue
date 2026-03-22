@@ -26,6 +26,7 @@ function toggleTop() {
     title="Pin window top"
     @click="toggleTop"
   >
-    {{ isTop ? '📌' : '🔝' }}
+    <!-- {{ isTop ? '📌' : '🔝' }} -->
+    <span class="mdi" :class="[isTop ? 'mdi-pin' : 'mdi-pin-off']" />
   </button>
 </template>

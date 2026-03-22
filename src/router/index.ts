@@ -14,7 +14,7 @@ const router = createRouter({
 })
 
 router.afterEach((to, from) => {
-  document.title = `[${version}] Web MediaDevices Player`
+  document.title = `[${version}] MediaDevicesPlayer`
 })
 
 export default router

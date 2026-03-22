@@ -40,6 +40,7 @@ const deviceList = ref<MediaDeviceInfo[]>([])
 const videoRef = ref()
 
 const mediaStreamRef = shallowRef<MediaStream>()
+const isScreenSharing = ref(false)
 
 const isStreaming = computed(() => {
   return Boolean(mediaStreamRef.value)
@@ -281,6 +282,7 @@ function stopMediaStreaming() {
       track.stop()
     }
   })
+  isScreenSharing.value = false
   mediaStreamRef.value = undefined
 }
 
@@ -312,12 +314,17 @@ async function handleStartStreamingCaptureScreen() {
       },
       audio: true,
     })
+    isScreenSharing.value = true
     mediaStreamRef.value = stream
     // console.log('stream', stream)
     const video = videoRef.value
     video.srcObject = stream
     video.onloadedmetadata = () => {
       video.play()
+    }
+    stream.getVideoTracks()[0].onended = () => {
+      isScreenSharing.value = false
+      stopMediaStreaming()
     }
   }
   catch (error: any) {
@@ -385,7 +392,12 @@ const isFolded = useStorage('wmd__actions_is_folded', false)
 
 const visibility = useDocumentVisibility()
 watch(visibility, (val) => {
+  const isRecording = Boolean(videoRecorder.value?.mediaRecorder)
   if (val === 'hidden') {
+    if (isRecording || isScreenSharing.value) {
+      console.log('[Visibility] Page hidden, but recording or screen sharing, keeping stream alive.')
+      return
+    }
     console.log('[Visibility] Page hidden, stopping video tracks...')
     mediaStreamRef.value?.getVideoTracks().forEach((track) => {
       if (track.readyState === 'live') {
