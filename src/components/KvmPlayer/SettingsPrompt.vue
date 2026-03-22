@@ -130,8 +130,11 @@ const showCursorModeTip = () => {
             </label>
 
             <label v-if="settingsStore.cursorMode === 'relative'">
-              <span>{{ $t('app.unlock_mouse_mode') }}</span>
-              <a a href="javascript:" @click="showTips($t('app.unlock_mouse_mode_tips'))">[?]</a>
+              <span>
+                {{ $t('app.unlock_mouse_mode') }}
+                <a a href="javascript:" @click="showTips($t('app.unlock_mouse_mode_tips'))">[?]</a>
+              </span>
+
               <select style="flex: 1" v-model="settingsStore.unlockMouseMode" class="themed-input">
                 <option value="disabled">{{ $t('app.unlock_mouse_mode_disabled') }}</option>
                 <option value="ctrl_alt">{{ $t('app.unlock_mouse_mode_ctrl_alt') }}</option>
