@@ -58,13 +58,20 @@ async function readLoop(reader) {
   }
 }
 
-const initSerial = async () => {
+const initSerial = async (isAuto = false) => {
   if (serialPort.value) {
     return
   }
   try {
     let port: SerialPort
-    if (navigator?.serial?.requestPort) {
+    if (isAuto && navigator?.serial?.getPorts) {
+      const ports = await navigator.serial.getPorts()
+      if (ports.length > 0) {
+        port = ports[0]
+      } else {
+        return
+      }
+    } else if (navigator?.serial?.requestPort) {
       port = await navigator.serial.requestPort()
     } else if (navigator?.usb?.requestDevice) {
       // todo: using polyfill  `Failed to execute 'open' on 'USBDevice': Access denied.`
@@ -119,6 +126,12 @@ onBeforeUnmount(() => {
   // closeSerial()
   // closeSerial()
   // closeSerial()
+})
+
+onMounted(async () => {
+  if (settingsStore.enableKvmInput && settingsStore.autoConnectKvm) {
+    initSerial(true)
+  }
 })
 
 const sendText = async (text: string | null) => {

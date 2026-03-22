@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {onMounted, ref, computed, shallowRef, onBeforeUnmount, watch} from 'vue'
-import {useFullscreen, usePermission, useStorage} from '@vueuse/core'
+import {useDocumentVisibility, useFullscreen, usePermission, useStorage} from '@vueuse/core'
 import {downloadUrl, snapVideoImage} from './utils/index'
 import TauriActions from '@/components/KvmPlayer/TauriActions.vue'
 import {VideoRecorder} from './utils/video-recorder'
@@ -365,6 +365,23 @@ const enterInputMode = () => {
 }
 
 const isFolded = useStorage('wmd__actions_is_folded', false)
+
+const visibility = useDocumentVisibility()
+watch(visibility, (val) => {
+  if (val === 'hidden') {
+    console.log('[Visibility] Page hidden, stopping video tracks...')
+    mediaStreamRef.value?.getVideoTracks().forEach((track) => {
+      if (track.readyState === 'live') {
+        track.stop()
+      }
+    })
+  } else {
+    console.log('[Visibility] Page visible, resuming video stream...')
+    if (settingsStore.currentVideoDeviceId) {
+      startMediaStream()
+    }
+  }
+})
 
 const isActionBarVisible = computed(() => {
   return (
@@ -940,8 +957,8 @@ const isActionBarVisible = computed(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
     color: white;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     z-index: 20;
     font-size: 20px;
     display: flex;

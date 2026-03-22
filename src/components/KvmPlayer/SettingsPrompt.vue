@@ -95,6 +95,10 @@ const showCursorModeTip = () => {
           </label>
 
           <template v-if="settingsStore.enableKvmInput">
+            <label class="cursor-pointer">
+              <input type="checkbox" v-model="settingsStore.autoConnectKvm" />
+              <span>{{ $t('app.auto_connect_kvm') }}</span>
+            </label>
             <label>
               <span>{{ $t('app.baud_rate') }}</span>
               <select style="flex: 1" v-model="settingsStore.baudRate" class="themed-input">

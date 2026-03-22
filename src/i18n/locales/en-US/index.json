@@ -69,6 +69,7 @@
     "float_ui": "Float UI",
     "kvm_settings": "KVM Settings",
     "enable_kvm_input": "Enable KVM Input",
+    "auto_connect_kvm": "Auto Connect Serial",
     "baud_rate": "Baud Rate",
     "keyboard_compatible_mode": "Keyboard Compatible Mode",
     "cursor_mode": "Cursor Mode",

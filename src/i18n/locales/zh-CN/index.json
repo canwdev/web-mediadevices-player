@@ -69,6 +69,7 @@
     "float_ui": "悬浮界面",
     "kvm_settings": "KVM 设置",
     "enable_kvm_input": "启用 KVM 输入",
+    "auto_connect_kvm": "自动连接串口",
     "baud_rate": "波特率",
     "keyboard_compatible_mode": "键盘兼容模式",
     "cursor_mode": "光标模式",
