@@ -356,16 +356,18 @@ const handleKeydown = async (event: KeyboardEvent) => {
 
   // 注意：无法阻止 esc 退出全屏
 
-  // console.log(event)
-  // 按下 ctrl+alt 解锁鼠标
-  // if (event.ctrlKey && event.altKey) {
-  // await unlock()
-  // }
-
-  // 按下right ctrl 解锁
-  // if (event.code === 'ControlRight') {
-  //   await unlock()
-  // }
+  // 解锁鼠标逻辑
+  const unlockMode = settingsStore.unlockMouseMode
+  if (settingsStore.cursorMode === 'relative') {
+    if (unlockMode === 'ctrl_alt' && event.ctrlKey && event.altKey) {
+      await unlock()
+      return
+    }
+    if (unlockMode === 'right_ctrl' && event.code === 'ControlRight') {
+      await unlock()
+      return
+    }
+  }
 
   const isCompatibleMode = settingsStore.keyboardCompatibleMode
 

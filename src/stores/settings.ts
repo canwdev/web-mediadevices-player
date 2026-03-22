@@ -15,6 +15,7 @@ interface ISettings {
   baudRate: string
   // 鼠标定位模式，建议在Linux客户机下启用相对模式
   cursorMode: 'relative' | 'absolute'
+  unlockMouseMode: 'right_ctrl' | 'ctrl_alt' | 'disabled'
   absMouseAreaHeight: number
   absMouseAreaWidth: number
   // 键盘兼容模式，建议在Linux客户机下启用
@@ -40,6 +41,7 @@ export const useSettingsStore = defineStore('settingsStore', {
       enableKvmInput: false,
       baudRate: '9600',
       cursorMode: 'absolute',
+      unlockMouseMode: 'ctrl_alt',
       absMouseAreaHeight: 100,
       absMouseAreaWidth: 100,
       keyboardCompatibleMode: false,

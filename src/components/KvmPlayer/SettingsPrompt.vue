@@ -39,23 +39,18 @@ const filterOptions = [
 const kvmInputHelp = () => {
   uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
 }
-
-const showCursorModeTip = () => {
+const showTips = (html: string) => {
   window.$notification({
     type: 'info',
-    html:
-      $t('app.linux_and_android_do_not_support') +
-      'Ref: <a href="https://www.wch.cn/bbs/thread-83322-1.html" target="_blank">[1]</a> <a href="https://www.wch.cn/bbs/thread-108708-1.html" target="_blank">[2]</a>',
+    html,
     timeout: 10000,
   })
 }
-
-const showKeyboardCompatibleModeTip = () => {
-  window.$notification({
-    type: 'info',
-    html: $t('app.it_is_recommended_to_enable_this'),
-    timeout: 10000,
-  })
+const showCursorModeTip = () => {
+  showTips(
+    $t('app.linux_and_android_do_not_support') +
+      'Ref: <a href="https://www.wch.cn/bbs/thread-83322-1.html" target="_blank">[1]</a> <a href="https://www.wch.cn/bbs/thread-108708-1.html" target="_blank">[2]</a>',
+  )
 }
 </script>
 
@@ -116,7 +111,11 @@ const showKeyboardCompatibleModeTip = () => {
               <input type="checkbox" v-model="settingsStore.keyboardCompatibleMode" />
               <span
                 >{{ $t('app.keyboard_compatible_mode')
-                }}<a href="javascript:" @click="showKeyboardCompatibleModeTip">[?]</a></span
+                }}<a
+                  href="javascript:"
+                  @click="showTips($t('app.it_is_recommended_to_enable_this'))"
+                  >[?]</a
+                ></span
               >
             </label>
             <label>
@@ -127,6 +126,16 @@ const showKeyboardCompatibleModeTip = () => {
 
               <select style="flex: 1" v-model="settingsStore.cursorMode" class="themed-input">
                 <option v-for="v in ['relative', 'absolute']" :key="v">{{ v }}</option>
+              </select>
+            </label>
+
+            <label v-if="settingsStore.cursorMode === 'relative'">
+              <span>{{ $t('app.unlock_mouse_mode') }}</span>
+              <a a href="javascript:" @click="showTips($t('app.unlock_mouse_mode_tips'))">[?]</a>
+              <select style="flex: 1" v-model="settingsStore.unlockMouseMode" class="themed-input">
+                <option value="disabled">{{ $t('app.unlock_mouse_mode_disabled') }}</option>
+                <option value="ctrl_alt">{{ $t('app.unlock_mouse_mode_ctrl_alt') }}</option>
+                <option value="right_ctrl">{{ $t('app.unlock_mouse_mode_right_ctrl') }}</option>
               </select>
             </label>
 
