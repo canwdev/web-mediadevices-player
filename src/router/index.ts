@@ -1,5 +1,5 @@
-import {createRouter, createWebHashHistory} from 'vue-router'
-import {version} from '../../package.json'
+import { createRouter, createWebHashHistory } from 'vue-router'
+import { version } from '../../package.json'
 import HomeView from '../App.vue'
 
 const router = createRouter({

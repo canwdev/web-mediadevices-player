@@ -1,6 +1,6 @@
-import {createGlobalState} from '@vueuse/core'
-import {shallowRef} from 'vue'
-import type {SerialPort} from 'web-serial-polyfill'
+import type { SerialPort } from 'web-serial-polyfill'
+import { createGlobalState } from '@vueuse/core'
+import { shallowRef } from 'vue'
 
 export const useSerialState = createGlobalState(() => {
   const reader = shallowRef<any>()

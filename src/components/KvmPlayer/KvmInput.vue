@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {onBeforeUnmount, onMounted, Ref, ref, shallowRef, watch} from 'vue'
-import {createPrompt} from '@/components/PromptInput/prompt-input'
-import {useEventListener, usePointerLock, useThrottleFn, useWindowFocus} from '@vueuse/core'
-import {ASCII_KEYS} from '@/components/KvmPlayer/utils/keys-enum'
-import {useSerialState} from '@/components/KvmPlayer/utils/serial-state'
+import type { SerialPort } from 'web-serial-polyfill'
+import { useEventListener, usePointerLock, useThrottleFn, useWindowFocus } from '@vueuse/core'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { sleep } from '@/components/KvmPlayer/utils'
 import {
   CmdType,
   decomposeHexToBytes,
@@ -13,19 +13,18 @@ import {
   MediaKey,
   mediaKeyMatrix,
 } from '@/components/KvmPlayer/utils/ch9329'
-import {useSettingsStore} from '@/stores/settings'
-import {sleep} from '@/components/KvmPlayer/utils'
-import {eventBus} from '@/utils/event-bus'
-import {SerialPort} from 'web-serial-polyfill'
-import {useI18n} from 'vue-i18n'
+import { ASCII_KEYS } from '@/components/KvmPlayer/utils/keys-enum'
+import { useSerialState } from '@/components/KvmPlayer/utils/serial-state'
+import { createPrompt } from '@/components/PromptInput/prompt-input'
+import { useSettingsStore } from '@/stores/settings'
+import { eventBus } from '@/utils/event-bus'
 
-const {t: $t} = useI18n()
 const emit = defineEmits(['connected', 'disconnected'])
-
+const { t: $t } = useI18n()
 const settingsStore = useSettingsStore()
-const {reader, writer, serialPort} = useSerialState()
+const { reader, writer, serialPort } = useSerialState()
 
-const writeSerial = (...args: any) => {
+function writeSerial(...args: any) {
   if (!writer.value) {
     window.$notification({
       type: 'error',
@@ -43,7 +42,7 @@ async function readLoop(reader) {
   while (true) {
     try {
       // 从串口读取数据
-      const {value, done} = await reader.read()
+      const { value, done } = await reader.read()
       if (done) {
         // 读取结束
         console.log('Stream closed')
@@ -51,14 +50,15 @@ async function readLoop(reader) {
       }
       // 处理读取的数据
       console.log(value)
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Read error: ', error)
       break
     }
   }
 }
 
-const initSerial = async (isAuto = false) => {
+async function initSerial(isAuto = false) {
   if (serialPort.value) {
     return
   }
@@ -68,15 +68,18 @@ const initSerial = async (isAuto = false) => {
       const ports = await navigator.serial.getPorts()
       if (ports.length > 0) {
         port = ports[0]
-      } else {
+      }
+      else {
         return
       }
-    } else if (navigator?.serial?.requestPort) {
+    }
+    else if (navigator?.serial?.requestPort) {
       port = await navigator.serial.requestPort()
-    } else if (navigator?.usb?.requestDevice) {
+    }
+    else if (navigator?.usb?.requestDevice) {
       // todo: using polyfill  `Failed to execute 'open' on 'USBDevice': Access denied.`
       const serialPolyfill = import('web-serial-polyfill')
-      const device = await navigator.usb.requestDevice({filters: []})
+      const device = await navigator.usb.requestDevice({ filters: [] })
       // console.log(device)
       port = new (await serialPolyfill).SerialPort(device, {
         usbControlInterfaceClass: 255,
@@ -87,7 +90,7 @@ const initSerial = async (isAuto = false) => {
     settingsStore.baudRate = baudRate
 
     // Opening port
-    const opened = port.open({baudRate: +baudRate})
+    const opened = port.open({ baudRate: +baudRate })
     const timeout = new Promise((resolve, reject) => setTimeout(reject, 900))
     await Promise.race([timeout, opened])
     reader.value = await port.readable.getReader()
@@ -97,7 +100,8 @@ const initSerial = async (isAuto = false) => {
     emit('connected', port)
 
     // readLoop(reader.value)
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error(error)
     window.$notification({
       type: 'error',
@@ -106,7 +110,7 @@ const initSerial = async (isAuto = false) => {
     })
   }
 }
-const closeSerial = () => {
+function closeSerial() {
   if (reader.value) {
     reader.value.releaseLock()
     reader.value = null
@@ -134,7 +138,7 @@ onMounted(async () => {
   }
 })
 
-const sendText = async (text: string | null) => {
+async function sendText(text: string | null) {
   if (!text) {
     return
   }
@@ -167,17 +171,19 @@ const sendText = async (text: string | null) => {
 const rootRef = ref()
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock
-const {lock, unlock} = usePointerLock(rootRef, {})
+const { lock, unlock } = usePointerLock(rootRef, {})
 
 const handleRelativeMouseWheel = useThrottleFn(async (event: WheelEvent) => {
-  if (!serialPort.value) return
+  if (!serialPort.value)
+    return
   event.preventDefault() // 阻止默认的缩放行为
   // event.deltaY 表示滚动距离
   let value
   if (event.deltaY > 0) {
     // console.log('向下滚动', event.deltaY)
-    value = new Uint8Array(genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, 0, 0, 0, 0xfd))
-  } else {
+    value = new Uint8Array(genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, 0, 0, 0, 0xFD))
+  }
+  else {
     // console.log('向上滚动', event.deltaY)
 
     value = new Uint8Array(genPacket(CmdType.CMD_SEND_MS_REL_DATA, 1, 0, 0, 0, 0x02))
@@ -202,13 +208,14 @@ useEventListener(document, 'pointerlockchange', (event) => {
   let [pressedBits, x, y] = [0, 0, 0]
   let timer: any = null // a modified throttle strategy
 
-  document.addEventListener('wheel', handleRelativeMouseWheel, {passive: false})
-  el.onmousemove =
-    el.onmousedown =
-    el.onmouseup =
-      (event: MouseEvent) => {
-        if (!serialPort.value || !writer.value) return
-        /*        const pressedBits = event.buttons // so lucky, coincidence or necessity?
+  document.addEventListener('wheel', handleRelativeMouseWheel, { passive: false })
+  el.onmousemove
+    = el.onmousedown
+      = el.onmouseup
+        = (event: MouseEvent) => {
+          if (!serialPort.value || !writer.value)
+            return
+          /*        const pressedBits = event.buttons // so lucky, coincidence or necessity?
         const x = Math.round(event.movementX)
         const y = Math.round(event.movementY)
 
@@ -217,41 +224,44 @@ useEventListener(document, 'pointerlockchange', (event) => {
         if (pY < 0) pY = (0xff + pY) & 0xff
         writeSerial(
           new Uint8Array(genPacket(CmdType.CMD_SEND_MS_REL_DATA, 0x01, pressedBits, pX, pY, 0)),
-        )*/
+        ) */
 
-        x += event.movementX
-        y += event.movementY
-        if (pressedBits != event.buttons || i8clamp(x) !== x || i8clamp(y) !== y) {
-          clearTimeout(timer)
-          timer = null // force trigger
+          x += event.movementX
+          y += event.movementY
+          if (pressedBits != event.buttons || i8clamp(x) !== x || i8clamp(y) !== y) {
+            clearTimeout(timer)
+            timer = null // force trigger
+          }
+          pressedBits = event.buttons // so lucky, coincidence or necessity?
+          if (timer !== null)
+            return
+          x = Math.round(x)
+          y = Math.round(y)
+          const value: any = []
+          do {
+            let [pX, pY] = [i8clamp(x), i8clamp(y)]
+            x -= pX
+            y -= pY
+            if (pX < 0)
+              pX = (0xFF + pX) & 0xFF
+            if (pY < 0)
+              pY = (0xFF + pY) & 0xFF
+            // console.log({pressedBits, pX, pY})
+            value.push(...genPacket(CmdType.CMD_SEND_MS_REL_DATA, 0x01, pressedBits, pX, pY, 0))
+          } while (
+            x !== 0
+            || y !== 0 // use "do while" loop to send mousedown/mouseup immediately
+          )
+          x = 0
+          y = 0
+          writer.value.write(new Uint8Array(value)) // without await on purpose
+          timer = setTimeout(() => (timer = null), 16)
         }
-        pressedBits = event.buttons // so lucky, coincidence or necessity?
-        if (timer !== null) return
-        x = Math.round(x)
-        y = Math.round(y)
-        const value: any = []
-        do {
-          let [pX, pY] = [i8clamp(x), i8clamp(y)]
-          x -= pX
-          y -= pY
-          if (pX < 0) pX = (0xff + pX) & 0xff
-          if (pY < 0) pY = (0xff + pY) & 0xff
-          // console.log({pressedBits, pX, pY})
-          value.push(...genPacket(CmdType.CMD_SEND_MS_REL_DATA, 0x01, pressedBits, pX, pY, 0))
-        } while (
-          x !== 0 ||
-          y !== 0 // use "do while" loop to send mousedown/mouseup immediately
-        )
-        x = 0
-        y = 0
-        writer.value.write(new Uint8Array(value)) // without await on purpose
-        timer = setTimeout(() => (timer = null), 16)
-      }
 })
 
 // 绝对鼠标模式
 const absMouseRef = ref()
-const releaseAbsoluteMouse = () => {
+function releaseAbsoluteMouse() {
   const absEl = absMouseRef.value
   absMouseRef.value = null
   if (!absEl) {
@@ -265,18 +275,18 @@ onBeforeUnmount(() => {
   handleKeyup()
   releaseAbsoluteMouse()
 })
-const bindAbsoluteMouse = (absEl) => {
+function bindAbsoluteMouse(absEl) {
   absMouseRef.value = absEl
 
-  document.addEventListener('wheel', handleRelativeMouseWheel, {passive: false})
-  absEl.oncontextmenu = (e) => e.preventDefault()
+  document.addEventListener('wheel', handleRelativeMouseWheel, { passive: false })
+  absEl.oncontextmenu = e => e.preventDefault()
   absEl.ondblclick = (e) => {
     e.preventDefault()
     e.stopPropagation()
   }
 
   const writeSerialThrottled = useThrottleFn(
-    ({pressedBits, x, y}) => {
+    ({ pressedBits, x, y }) => {
       writeSerial(
         new Uint8Array(
           genPacket(
@@ -294,64 +304,64 @@ const bindAbsoluteMouse = (absEl) => {
     true,
   )
 
-  absEl.onmousemove =
-    absEl.onmousedown =
-    absEl.onmouseup =
-      (event: MouseEvent) => {
-        if (!serialPort.value || !writer.value) return
-        event.preventDefault()
-        event.stopPropagation()
+  absEl.onmousemove
+    = absEl.onmousedown
+      = absEl.onmouseup
+        = (event: MouseEvent) => {
+          if (!serialPort.value || !writer.value)
+            return
+          event.preventDefault()
+          event.stopPropagation()
 
-        let pressedBits = event.buttons
+          const pressedBits = event.buttons
 
-        // TODO: optimize,
-        const rect = absEl.getBoundingClientRect()
-        const screenWidth = rect.width
-        const screenHeight = rect.height
+          // TODO: optimize,
+          const rect = absEl.getBoundingClientRect()
+          const screenWidth = rect.width
+          const screenHeight = rect.height
 
-        // 计算鼠标相对于元素左上角的坐标
-        let offsetX = event.clientX - rect.left
-        let offsetY = event.clientY - rect.top
-        // if (settingsStore.filterMirrorY) {
-        //   offsetX = rect.width - offsetX
-        // }
-        // if (settingsStore.filterMirrorX) {
-        //   offsetY = rect.height - offsetY
-        // }
+          // 计算鼠标相对于元素左上角的坐标
+          const offsetX = event.clientX - rect.left
+          const offsetY = event.clientY - rect.top
+          // if (settingsStore.filterMirrorY) {
+          //   offsetX = rect.width - offsetX
+          // }
+          // if (settingsStore.filterMirrorX) {
+          //   offsetY = rect.height - offsetY
+          // }
 
-        // 计算新的位置
-        let x = Math.floor((offsetX * 4096) / screenWidth)
-        let y = Math.floor((offsetY * 4096) / screenHeight)
-        // console.log({
-        //   event,
-        //   offsetX,
-        //   offsetY,
-        //   screenWidth,
-        //   screenHeight,
-        //   x,
-        //   y,
-        // })
+          // 计算新的位置
+          const x = Math.floor((offsetX * 4096) / screenWidth)
+          const y = Math.floor((offsetY * 4096) / screenHeight)
+          // console.log({
+          //   event,
+          //   offsetX,
+          //   offsetY,
+          //   screenWidth,
+          //   screenHeight,
+          //   x,
+          //   y,
+          // })
 
-        // 9600 波特率，打开浏览器控制台后鼠标移动会很慢，需要节流
-        writeSerialThrottled({
-          pressedBits,
-          x,
-          y,
-        })
-      }
+          // 9600 波特率，打开浏览器控制台后鼠标移动会很慢，需要节流
+          writeSerialThrottled({
+            pressedBits,
+            x,
+            y,
+          })
+        }
 }
 watch(
   () => settingsStore.cursorMode,
   (mode) => {
     if (mode === 'relative') {
       releaseAbsoluteMouse()
-      return
     }
   },
-  {immediate: true},
+  { immediate: true },
 )
 
-const showSendInput = async () => {
+async function showSendInput() {
   const text = await createPrompt('', $t('app.send_text'), {
     type: 'textarea',
     inputProps: {
@@ -364,16 +374,16 @@ const showSendInput = async () => {
 
 const eatKeys = new Set() // avoid tailing control keys (press and release key A will emit event keyup[A] and keyup[Shift])
 
-const handleKeydown = async (event: KeyboardEvent) => {
+async function handleKeydown(event: KeyboardEvent) {
   if (!serialPort.value) {
     return
   }
 
   // 避免在输入框中触发 KVM 按键
   if (
-    event.target instanceof HTMLInputElement ||
-    event.target instanceof HTMLTextAreaElement ||
-    (event.target as HTMLElement)?.isContentEditable
+    event.target instanceof HTMLInputElement
+    || event.target instanceof HTMLTextAreaElement
+    || (event.target as HTMLElement)?.isContentEditable
   ) {
     return
   }
@@ -429,7 +439,7 @@ const handleKeydown = async (event: KeyboardEvent) => {
   await writeSerial(new Uint8Array(arr))
 }
 
-const handleKeyup = async (event?: KeyboardEvent) => {
+async function handleKeyup(event?: KeyboardEvent) {
   if (!serialPort.value) {
     return
   }
@@ -490,8 +500,8 @@ const transferOptions = [
     },
   },
 ]
-const handleTransferSelect = async () => {
-  const item = transferOptions.find((i) => i.value === selectedTransfer.value)
+async function handleTransferSelect() {
+  const item = transferOptions.find(i => i.value === selectedTransfer.value)
   if (!item) {
     return
   }
@@ -502,7 +512,7 @@ const handleTransferSelect = async () => {
 
 const selectedComboKey = ref('')
 const specialKeyOptions = [
-  {value: '', label: $t('app.select_combo_keys'), disabled: true, hidden: true},
+  { value: '', label: $t('app.select_combo_keys'), disabled: true, hidden: true },
   {
     value: 'ctrl_alt_del',
     label: 'Ctrl + Alt + Del',
@@ -579,18 +589,18 @@ const specialKeyOptions = [
       key: 'Capslock',
     },
   },
-  {label: '-----------------', disabled: true},
-  {value: 'ctrl_alt_f1', label: 'Ctrl + Alt + F1'},
-  {value: 'ctrl_alt_f2', label: 'Ctrl + Alt + F2'},
-  {value: 'ctrl_alt_f3', label: 'Ctrl + Alt + F3'},
-  {value: 'ctrl_alt_f4', label: 'Ctrl + Alt + F4'},
-  {value: 'ctrl_alt_f5', label: 'Ctrl + Alt + F5'},
-  {value: 'ctrl_alt_f6', label: 'Ctrl + Alt + F6'},
-  {value: 'ctrl_alt_f7', label: 'Ctrl + Alt + F7'},
-  {value: 'ctrl_alt_f8', label: 'Ctrl + Alt + F8'},
-  {value: 'ctrl_alt_f9', label: 'Ctrl + Alt + F9'},
+  { label: '-----------------', disabled: true },
+  { value: 'ctrl_alt_f1', label: 'Ctrl + Alt + F1' },
+  { value: 'ctrl_alt_f2', label: 'Ctrl + Alt + F2' },
+  { value: 'ctrl_alt_f3', label: 'Ctrl + Alt + F3' },
+  { value: 'ctrl_alt_f4', label: 'Ctrl + Alt + F4' },
+  { value: 'ctrl_alt_f5', label: 'Ctrl + Alt + F5' },
+  { value: 'ctrl_alt_f6', label: 'Ctrl + Alt + F6' },
+  { value: 'ctrl_alt_f7', label: 'Ctrl + Alt + F7' },
+  { value: 'ctrl_alt_f8', label: 'Ctrl + Alt + F8' },
+  { value: 'ctrl_alt_f9', label: 'Ctrl + Alt + F9' },
 ]
-const handleSendComboKey = async () => {
+async function handleSendComboKey() {
   const value = selectedComboKey.value
   if (!value) {
     return
@@ -601,10 +611,11 @@ const handleSendComboKey = async () => {
   let hidCode = 0
 
   if (/^ctrl_alt_f\d+$/.test(value)) {
-    key = 'F' + value.slice(10)
+    key = `F${value.slice(10)}`
     controlBits = 0b00000101
-  } else {
-    const item = specialKeyOptions.find((i) => i.value === value)
+  }
+  else {
+    const item = specialKeyOptions.find(i => i.value === value)
     if (!item) {
       return
     }
@@ -627,51 +638,51 @@ const handleSendComboKey = async () => {
 
 const selectedMediaKey = ref('')
 const mediaKeyACPIOptions = [
-  {value: 0b00000100, label: $t('app.wake_up')},
-  {value: 0b00000010, label: $t('app.sleep')},
-  {value: 0b00000001, label: $t('app.power')},
+  { value: 0b00000100, label: $t('app.wake_up') },
+  { value: 0b00000010, label: $t('app.sleep') },
+  { value: 0b00000001, label: $t('app.power') },
 ]
 const mediaKeyCommonGroups = [
   {
     label: $t('app.media_control'),
     children: [
-      {value: MediaKey.PREV_TRACK, label: $t('app.previous_track')},
-      {value: MediaKey.NEXT_TRACK, label: $t('app.next_track')},
-      {value: MediaKey.CD_STOP, label: $t('app.cd_stop')},
-      {value: MediaKey.PLAY_PAUSE, label: $t('app.play_pause')},
-      {value: MediaKey.MUTE, label: $t('app.mute')},
-      {value: MediaKey.VOLUME_PLUS, label: $t('app.volume_up')},
-      {value: MediaKey.VOLUME_MINUS, label: $t('app.volume_down')},
+      { value: MediaKey.PREV_TRACK, label: $t('app.previous_track') },
+      { value: MediaKey.NEXT_TRACK, label: $t('app.next_track') },
+      { value: MediaKey.CD_STOP, label: $t('app.cd_stop') },
+      { value: MediaKey.PLAY_PAUSE, label: $t('app.play_pause') },
+      { value: MediaKey.MUTE, label: $t('app.mute') },
+      { value: MediaKey.VOLUME_PLUS, label: $t('app.volume_up') },
+      { value: MediaKey.VOLUME_MINUS, label: $t('app.volume_down') },
     ],
   },
   {
     label: $t('app.browser'),
     children: [
-      {value: MediaKey.REFRESH, label: $t('app.refresh')},
-      {value: MediaKey.STOP, label: $t('app.stop')},
-      {value: MediaKey.FORWARD, label: $t('app.forward')},
-      {value: MediaKey.BACK, label: $t('app.back')},
-      {value: MediaKey.HOME, label: $t('app.home_2')},
-      {value: MediaKey.SEARCH, label: $t('app.search')},
+      { value: MediaKey.REFRESH, label: $t('app.refresh') },
+      { value: MediaKey.STOP, label: $t('app.stop') },
+      { value: MediaKey.FORWARD, label: $t('app.forward') },
+      { value: MediaKey.BACK, label: $t('app.back') },
+      { value: MediaKey.HOME, label: $t('app.home_2') },
+      { value: MediaKey.SEARCH, label: $t('app.search') },
     ],
   },
   {
     label: $t('app.apps'),
     children: [
-      {value: MediaKey.E_MAIL, label: $t('app.e_mail')},
-      {value: MediaKey.MY_COMPUTER, label: $t('app.my_computer')},
-      {value: MediaKey.CALCULATOR, label: $t('app.calculator')},
-      {value: MediaKey.MEDIA, label: $t('app.media')},
+      { value: MediaKey.E_MAIL, label: $t('app.e_mail') },
+      { value: MediaKey.MY_COMPUTER, label: $t('app.my_computer') },
+      { value: MediaKey.CALCULATOR, label: $t('app.calculator') },
+      { value: MediaKey.MEDIA, label: $t('app.media') },
     ],
   },
 ]
-const handleSendMedialKey = async () => {
+async function handleSendMedialKey() {
   const value = selectedMediaKey.value
   if (!value) {
     return
   }
 
-  const acpiItem = mediaKeyACPIOptions.find((i) => i.value === Number(value))
+  const acpiItem = mediaKeyACPIOptions.find(i => i.value === Number(value))
   if (acpiItem) {
     // 发送ACPI按键
     const sv = new Uint8Array([
@@ -704,7 +715,7 @@ const handleSendMedialKey = async () => {
   selectedMediaKey.value = ''
 }
 
-const autoEnable = (el) => {
+function autoEnable(el) {
   if (!serialPort.value) {
     initSerial()
     return
@@ -712,7 +723,8 @@ const autoEnable = (el) => {
 
   if (settingsStore.cursorMode === 'relative') {
     lock(rootRef.value)
-  } else if (el && !absMouseRef.value) {
+  }
+  else if (el && !absMouseRef.value) {
     bindAbsoluteMouse(el)
   }
 }
@@ -726,30 +738,30 @@ defineExpose({
   <div ref="rootRef" class="kvm-input flex-row-center-gap scrollbar-mini" tabindex="-1">
     <button
       v-if="!serialPort"
-      @click="initSerial"
       class="btn-no-style blue"
       :title="$t('app.connect_serial')"
+      @click="initSerial"
     >
-      <span class="mdi mdi-connection"></span>
+      <span class="mdi mdi-connection" />
     </button>
     <template v-else>
-      <button @click="closeSerial" class="btn-no-style orange" :title="$t('app.close_serial')">
-        <span class="mdi mdi-lan-disconnect"></span>
+      <button class="btn-no-style orange" :title="$t('app.close_serial')" @click="closeSerial">
+        <span class="mdi mdi-lan-disconnect" />
       </button>
-      <!--<button @click="lock(rootRef)" class="btn-no-style blue">Capture Mouse</button>-->
+      <!-- <button @click="lock(rootRef)" class="btn-no-style blue">Capture Mouse</button> -->
 
       <label
         class="select-label-wrapper"
         :title="$t('app.text_transfer')"
-        :class="{activated: selectedTransfer !== ''}"
+        :class="{ activated: selectedTransfer !== '' }"
       >
-        <span class="mdi mdi-card-text"></span>
+        <span class="mdi mdi-card-text" />
         <select v-model="selectedTransfer" class="btn-no-style" @change="handleTransferSelect">
           <option
             v-for="item in transferOptions"
+            :key="item.value"
             :disabled="item.disabled"
             :hidden="item.hidden"
-            :key="item.value"
             :value="item.value"
           >
             {{ item.label }}
@@ -760,9 +772,9 @@ defineExpose({
       <label
         class="select-label-wrapper"
         :title="$t('app.send_combo_keys')"
-        :class="{activated: selectedComboKey !== ''}"
+        :class="{ activated: selectedComboKey !== '' }"
       >
-        <span class="mdi mdi-keyboard-close-outline"></span>
+        <span class="mdi mdi-keyboard-close-outline" />
         <select v-model="selectedComboKey" class="btn-no-style" @change="handleSendComboKey">
           <option
             v-for="item in specialKeyOptions"
@@ -779,11 +791,11 @@ defineExpose({
       <label
         class="select-label-wrapper"
         :title="$t('app.send_media_keys')"
-        :class="{activated: selectedMediaKey !== ''}"
+        :class="{ activated: selectedMediaKey !== '' }"
       >
-        <span class="mdi mdi-keyboard-close"></span>
+        <span class="mdi mdi-keyboard-close" />
         <select v-model="selectedMediaKey" class="btn-no-style" @change="handleSendMedialKey">
-          <option :value="''" disabled hidden>{{ $t('app.select_media_keys') }}</option>
+          <option value="" disabled hidden>{{ $t('app.select_media_keys') }}</option>
           <optgroup label="ACPI">
             <option v-for="item in mediaKeyACPIOptions" :key="item.value" :value="item.value">
               {{ item.label }}

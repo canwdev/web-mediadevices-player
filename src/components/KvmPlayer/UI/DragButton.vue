@@ -1,5 +1,5 @@
 <script lang="ts" setup="">
-import {toRefs} from 'vue'
+import { toRefs } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -10,17 +10,17 @@ const props = withDefaults(
   },
 )
 const emit = defineEmits([])
-const {docked} = toRefs(props)
+const { docked } = toRefs(props)
 </script>
 
 <template>
   <div class="drag-button-wrapper">
-    <button :class="{docked}" class="btn-no-style btn-action-bar-drag">
-      <!--<svg v-if="docked" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">-->
-      <!--  <path-->
-      <!--    d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"-->
-      <!--  />-->
-      <!--</svg>-->
+    <button :class="{ docked }" class="btn-no-style btn-action-bar-drag">
+      <!-- <svg v-if="docked" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"> -->
+      <!--  <path -->
+      <!--    d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z" -->
+      <!--  /> -->
+      <!-- </svg> -->
       <svg v-if="docked" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
       </svg>

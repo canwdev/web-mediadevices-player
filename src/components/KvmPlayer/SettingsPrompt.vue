@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import {useVModel, onKeyStroke} from '@vueuse/core'
-import {useSettingsStore} from '@/stores/settings'
-import {getVersion, uniOpenUrl} from '@/utils'
+import { onKeyStroke, useVModel } from '@vueuse/core'
+import { useI18n } from 'vue-i18n'
+import { localeList, localeRef } from '@/i18n'
 
-import {useI18n} from 'vue-i18n'
-import {localeList, localeRef} from '@/i18n'
+import { useSettingsStore } from '@/stores/settings'
+import { getVersion, uniOpenUrl } from '@/utils'
 
-const {t: $t} = useI18n()
+const props = withDefaults(defineProps<Props>(), {
+  visible: false,
+})
+const emit = defineEmits(['update:visible'])
+const { t: $t } = useI18n()
 const settingsStore = useSettingsStore()
 interface Props {
   visible: boolean
   graphInfo?: any
 }
 
-const emit = defineEmits(['update:visible'])
-const props = withDefaults(defineProps<Props>(), {
-  visible: false,
-})
 const mVisible = useVModel(props, 'visible', emit)
 
 onKeyStroke('Escape', (e) => {
@@ -27,41 +27,45 @@ onKeyStroke('Escape', (e) => {
 })
 
 const filterOptions = [
-  {value: 'grayscale(1)', label: $t('app.grayscale')},
-  {value: 'sepia(1)', label: $t('app.sepia')},
-  {value: 'contrast(3)', label: $t('app.contrast')},
-  {value: 'hue-rotate(90deg)', label: $t('app.hue_rotate')},
-  {value: 'blur(10px)', label: $t('app.blur')},
-  {value: 'invert(1)', label: $t('app.invert')},
-  {value: 'brightness(2)', label: $t('app.brightness')},
+  { value: 'grayscale(1)', label: $t('app.grayscale') },
+  { value: 'sepia(1)', label: $t('app.sepia') },
+  { value: 'contrast(3)', label: $t('app.contrast') },
+  { value: 'hue-rotate(90deg)', label: $t('app.hue_rotate') },
+  { value: 'blur(10px)', label: $t('app.blur') },
+  { value: 'invert(1)', label: $t('app.invert') },
+  { value: 'brightness(2)', label: $t('app.brightness') },
 ]
 
-const kvmInputHelp = () => {
+function kvmInputHelp() {
   uniOpenUrl('https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md')
 }
-const showTips = (html: string) => {
+function showTips(html: string) {
   window.$notification({
     type: 'info',
     html,
     timeout: 10000,
   })
 }
-const showCursorModeTip = () => {
+function showCursorModeTip() {
   showTips(
-    $t('app.linux_and_android_do_not_support') +
-      'Ref: <a href="https://www.wch.cn/bbs/thread-83322-1.html" target="_blank">[1]</a> <a href="https://www.wch.cn/bbs/thread-108708-1.html" target="_blank">[2]</a>',
+    `${$t('app.linux_and_android_do_not_support')
+    }Ref: <a href="https://www.wch.cn/bbs/thread-83322-1.html" target="_blank">[1]</a> <a href="https://www.wch.cn/bbs/thread-108708-1.html" target="_blank">[2]</a>`,
   )
 }
 </script>
 
 <template>
   <transition name="fade">
-    <div class="settings-mask" v-if="mVisible" @click="mVisible = false">
+    <div v-if="mVisible" class="settings-mask" @click="mVisible = false">
       <div class="settings-prompt panel-blur-bg" @click.stop @keydown.stop @keyup.stop>
-        <button class="btn-close btn-no-style" @click="mVisible = !mVisible">×</button>
+        <button class="btn-close btn-no-style" @click="mVisible = !mVisible">
+          ×
+        </button>
 
         <div class="settings-content" @contextmenu.prevent>
-          <div class="s-title" style="margin-top: 0">{{ $t('app.video') }}</div>
+          <div class="s-title" style="margin-top: 0">
+            {{ $t('app.video') }}
+          </div>
 
           <div v-if="settingsStore.videoConfig">
             <code>{{
@@ -71,64 +75,61 @@ const showCursorModeTip = () => {
 
           <label :title="$t('app.fit')">
             <span>{{ $t('app.video_fit') }}</span>
-            <select style="flex: 1" v-model="settingsStore.fitMode" class="themed-input">
+            <select v-model="settingsStore.fitMode" style="flex: 1" class="themed-input">
               <option v-for="v in ['contain', 'fill', 'cover', 'none']" :key="v">{{ v }}</option>
             </select>
           </label>
 
-          <!--<label title="Toggle video element controls" class="cursor-pointer">-->
-          <!--  <input type="checkbox" v-model="settingsStore.isShowControls" />-->
-          <!--  <span>Video Controls UI</span>-->
-          <!--</label>-->
+          <!-- <label title="Toggle video element controls" class="cursor-pointer"> -->
+          <!--  <input type="checkbox" v-model="settingsStore.isShowControls" /> -->
+          <!--  <span>Video Controls UI</span> -->
+          <!-- </label> -->
 
           <label class="cursor-pointer">
-            <input type="checkbox" v-model="settingsStore.floatUI" />
+            <input v-model="settingsStore.floatUI" type="checkbox">
             <span>{{ $t('app.float_ui') }}</span>
           </label>
 
-          <div class="s-title">{{ $t('app.kvm_settings') }}</div>
+          <div class="s-title">
+            {{ $t('app.kvm_settings') }}
+          </div>
 
           <label class="cursor-pointer">
-            <input type="checkbox" v-model="settingsStore.enableKvmInput" />
+            <input v-model="settingsStore.enableKvmInput" type="checkbox">
             <span>{{ $t('app.enable_kvm_input') }}</span>
             <a href="javascript:" @click="kvmInputHelp">[CH9329 ?]</a>
           </label>
 
           <template v-if="settingsStore.enableKvmInput">
             <label class="cursor-pointer">
-              <input type="checkbox" v-model="settingsStore.autoConnectKvm" />
+              <input v-model="settingsStore.autoConnectKvm" type="checkbox">
               <span>{{ $t('app.auto_connect_kvm') }}</span>
             </label>
             <label>
               <span>{{ $t('app.baud_rate') }}</span>
-              <select style="flex: 1" v-model="settingsStore.baudRate" class="themed-input">
+              <select v-model="settingsStore.baudRate" style="flex: 1" class="themed-input">
                 <option
                   v-for="v in [1200, 2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200]"
                   :key="v"
-                  :value="v + ''"
+                  :value="`${v}`"
                 >
                   {{ v }}
                 </option>
               </select>
             </label>
             <label>
-              <input type="checkbox" v-model="settingsStore.keyboardCompatibleMode" />
-              <span
-                >{{ $t('app.keyboard_compatible_mode')
-                }}<a
-                  href="javascript:"
-                  @click="showTips($t('app.it_is_recommended_to_enable_this'))"
-                  >[?]</a
-                ></span
-              >
+              <input v-model="settingsStore.keyboardCompatibleMode" type="checkbox">
+              <span>{{ $t('app.keyboard_compatible_mode')
+              }}<a
+                href="javascript:"
+                @click="showTips($t('app.it_is_recommended_to_enable_this'))"
+              >[?]</a></span>
             </label>
             <label>
-              <span
-                >{{ $t('app.cursor_mode')
-                }}<a href="javascript:" @click="showCursorModeTip">[?]</a></span
-              >
+              <span>{{ $t('app.cursor_mode')
+              }}<a href="javascript:" @click="showCursorModeTip">[?]</a></span>
 
-              <select style="flex: 1" v-model="settingsStore.cursorMode" class="themed-input">
+              <select v-model="settingsStore.cursorMode" style="flex: 1" class="themed-input">
                 <option v-for="v in ['relative', 'absolute']" :key="v">{{ v }}</option>
               </select>
             </label>
@@ -139,37 +140,37 @@ const showCursorModeTip = () => {
                 <a a href="javascript:" @click="showTips($t('app.unlock_mouse_mode_tips'))">[?]</a>
               </span>
 
-              <select style="flex: 1" v-model="settingsStore.unlockMouseMode" class="themed-input">
+              <select v-model="settingsStore.unlockMouseMode" style="flex: 1" class="themed-input">
                 <option value="disabled">{{ $t('app.unlock_mouse_mode_disabled') }}</option>
                 <option value="ctrl_alt">{{ $t('app.unlock_mouse_mode_ctrl_alt') }}</option>
                 <option value="right_ctrl">{{ $t('app.unlock_mouse_mode_right_ctrl') }}</option>
               </select>
             </label>
 
-            <div class="flex-row-center-gap" v-if="settingsStore.cursorMode === 'absolute'">
+            <div v-if="settingsStore.cursorMode === 'absolute'" class="flex-row-center-gap">
               <label>
                 W:
                 <input
+                  v-model="settingsStore.absMouseAreaWidth"
                   class="themed-input"
                   type="number"
                   step="0.4"
-                  v-model="settingsStore.absMouseAreaWidth"
                   :min="0"
                   :max="100"
                   :placeholder="$t('app.width')"
-                />%
+                >%
               </label>
               <label>
                 H:
                 <input
+                  v-model="settingsStore.absMouseAreaHeight"
                   class="themed-input"
                   type="number"
                   step="0.4"
-                  v-model="settingsStore.absMouseAreaHeight"
                   :min="0"
                   :max="100"
                   :placeholder="$t('app.height')"
-                />%
+                >%
               </label>
             </div>
           </template>
@@ -179,54 +180,56 @@ const showCursorModeTip = () => {
           </div>
 
           <label class="cursor-pointer">
-            <input type="checkbox" v-model="settingsStore.filterMirrorY" />
+            <input v-model="settingsStore.filterMirrorY" type="checkbox">
             <span>{{ $t('app.horizontal_mirror') }}</span>
           </label>
 
           <label class="cursor-pointer">
-            <input type="checkbox" v-model="settingsStore.filterMirrorX" />
+            <input v-model="settingsStore.filterMirrorX" type="checkbox">
             <span>{{ $t('app.vertical_mirror') }}</span>
           </label>
 
           <label class="cursor-pointer">
-            <input type="checkbox" v-model="settingsStore.filterShowFg" />
+            <input v-model="settingsStore.filterShowFg" type="checkbox">
             <span>{{ $t('app.pattern') }}</span>
           </label>
 
           <label
             v-for="option in filterOptions"
-            :for="option.label + option.value"
             :key="option.value"
+            :for="option.label + option.value"
             class="cursor-pointer"
             style="font-style: italic; font-weight: 500"
             :title="option.value"
-            @contextmenu.prevent="settingsStore.inputFilter += ' ' + option.value"
+            @contextmenu.prevent="settingsStore.inputFilter += ` ${option.value}`"
           >
             <input
+              :id="option.label + option.value"
+              v-model="settingsStore.selectedFilters"
               type="checkbox"
               name="filter"
-              :id="option.label + option.value"
               :value="option.value"
-              v-model="settingsStore.selectedFilters"
               :disabled="!!settingsStore.inputFilter"
-            />
+            >
             <span>{{ option.label }}</span>
           </label>
 
           <label style="font-style: italic; font-weight: 500">
             <span>filter:</span>
             <input
-              class="themed-input font-code"
               v-model="settingsStore.inputFilter"
+              class="themed-input font-code"
               :placeholder="$t('app.css_filter_code')"
-            />
+            >
           </label>
 
-          <div class="s-title">{{ $t('app.about') }}</div>
+          <div class="s-title">
+            {{ $t('app.about') }}
+          </div>
 
           <label>
             <span>Language</span>
-            <select style="flex: 1" v-model="localeRef" class="themed-input">
+            <select v-model="localeRef" style="flex: 1" class="themed-input">
               <option v-for="v in localeList" :key="v.value" :value="v.value">{{ v.label }}</option>
             </select>
           </label>

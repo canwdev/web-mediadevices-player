@@ -10,13 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup Bun
-      uses: oven-sh/setup-bun@v2
-    - name: Build
-      run: bun install && bun run build
-    - name: Deploy
-      uses: JamesIves/github-pages-deploy-action@4.1.1
-      with:
-        branch: gh-pages
-        folder: dist
+      - uses: actions/checkout@v3
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Build
+        run: bun install && bun run build
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@4.1.1
+        with:
+          branch: gh-pages
+          folder: dist

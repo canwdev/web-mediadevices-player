@@ -28,7 +28,7 @@ export class VideoRecorder {
 
     this.mediaRecorder.onstop = () => {
       console.log('record stop', this.mediaRecorder)
-      const blob = new Blob(this.recordedChunks, {type: 'video/webm'})
+      const blob = new Blob(this.recordedChunks, { type: 'video/webm' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url

@@ -1,16 +1,18 @@
-import {open} from '@tauri-apps/api/shell'
-export const isTauri = !!window.__TAURI__
+import { open } from '@tauri-apps/api/shell'
 import pkg from '../../package.json'
 
-export const uniOpenUrl = (url: string) => {
+export const isTauri = !!window.__TAURI__
+
+export function uniOpenUrl(url: string) {
   if (isTauri) {
     open(url)
-  } else {
+  }
+  else {
     window.open(url)
   }
 }
 
-export const getVersion = () => {
+export function getVersion() {
   return `v${pkg.version}`
 }
 

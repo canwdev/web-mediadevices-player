@@ -1,7 +1,7 @@
 <script lang="ts" setup="">
-import {INotification} from '@/components/NotificationList/notification-list'
+import type { INotification } from '@/components/NotificationList/notification-list'
 import moment from 'moment/moment'
-import {onMounted, ref, toRefs} from 'vue'
+import { onMounted, ref, toRefs } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -10,8 +10,8 @@ const props = withDefaults(
   {},
 )
 const emit = defineEmits(['remove'])
-const {item} = toRefs(props)
-const formatTime = (t: number) => {
+const { item } = toRefs(props)
+function formatTime(t: number) {
   return moment(t).format('YYYY-MM-DD HH:mm:ss')
 }
 
@@ -42,14 +42,22 @@ onMounted(() => {
 <template>
   <div class="notification-item" @mouseenter="isIn = true" @mouseleave="isIn = false">
     <div class="notification-item-inner panel-blur-bg">
-      <div class="message-type" :class="item.type">{{ item.type }}</div>
-      <div class="message-content" v-if="item.html" v-html="item.html"></div>
-      <div class="message-content" v-else>{{ item.message }}</div>
-      <div class="message-time">{{ formatTime(item.timestamp) }}</div>
-      <button class="btn-close" @click="emit('remove')">×</button>
+      <div class="message-type" :class="item.type">
+        {{ item.type }}
+      </div>
+      <div v-if="item.html" class="message-content" v-html="item.html" />
+      <div v-else class="message-content">
+        {{ item.message }}
+      </div>
+      <div class="message-time">
+        {{ formatTime(item.timestamp) }}
+      </div>
+      <button class="btn-close" @click="emit('remove')">
+        ×
+      </button>
 
       <div v-if="countdownMax" class="countdown-bar">
-        <div class="bar-inner" :style="{width: `${countdownPercent}%`}"></div>
+        <div class="bar-inner" :style="{ width: `${countdownPercent}%` }" />
       </div>
     </div>
   </div>

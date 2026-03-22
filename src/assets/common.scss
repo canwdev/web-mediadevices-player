@@ -2,12 +2,18 @@
   font-style: italic;
 }
 
-.font-code, .font-code * {
-  font-family: 'Victor Mono Regular', 'Cascadia Code', '等距更纱黑体 SC', 'Monaco', 'Fira Code Medium', Consolas, 'Courier New', monospace;
+.font-code,
+.font-code * {
+  font-family:
+    'Victor Mono Regular', 'Cascadia Code', '等距更纱黑体 SC', 'Monaco', 'Fira Code Medium', Consolas, 'Courier New',
+    monospace;
 }
 
-.font-emoji, .font-emoji * {
-  font-family: "Segoe UI Emoji", "SF Pro SC", "SF Pro Text", "SF Pro Icons", "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+.font-emoji,
+.font-emoji * {
+  font-family:
+    'Segoe UI Emoji', 'SF Pro SC', 'SF Pro Text', 'SF Pro Icons', 'PingFang SC', 'Helvetica Neue', 'Helvetica', 'Arial',
+    sans-serif;
 }
 
 .btn-no-style {
@@ -30,7 +36,6 @@
 }
 
 .scrollbar-mini * {
-
   &::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -73,7 +78,6 @@
   align-items: center;
 }
 
-
 /* Vue transitions */
 .fade-enter-active,
 .fade-leave-active {
@@ -85,24 +89,28 @@
   opacity: 0;
 }
 
-
 .fade-scale-enter-active,
 .fade-scale-leave-active {
   transform: scale(1);
-  transition: opacity 0.3s, transform 0.3s;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
 }
 
 .fade-scale-enter-from,
 .fade-scale-leave-to {
   opacity: 0;
   transform: scale(0.92);
-  transition: opacity 0.3s, transform 0.3s;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
 }
-
 
 .fade-up-enter-active,
 .fade-up-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .fade-up-enter-from,
@@ -113,7 +121,9 @@
 
 .fade-down-enter-active,
 .fade-down-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .fade-down-enter-from,
@@ -124,7 +134,9 @@
 
 .fade-left-enter-active,
 .fade-left-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .fade-left-enter-from,
@@ -135,7 +147,9 @@
 
 .fade-right-enter-active,
 .fade-right-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .fade-right-enter-from,
@@ -143,7 +157,6 @@
   transform: translateX(-20px);
   opacity: 0;
 }
-
 
 /* 1. declare transition */
 .fadeMove-move,
@@ -164,7 +177,6 @@
 .fadeMove-leave-active {
   position: absolute;
 }
-
 
 // animation: linear blink-animation 3s infinite;
 @keyframes blink-animation {

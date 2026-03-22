@@ -1,6 +1,6 @@
-import {useThrottleFn} from '@vueuse/core'
+import { useThrottleFn } from '@vueuse/core'
 
-type showHideFnType = (arg0: {el: HTMLElement; isShow: boolean}) => void
+type showHideFnType = (arg0: { el: HTMLElement, isShow: boolean }) => void
 
 // 鼠标自动隐藏工具
 export class CursorHider {
@@ -24,8 +24,9 @@ export class CursorHider {
 
   hideCursor() {
     if (typeof this.showHideFn === 'function') {
-      this.showHideFn({el: this.targetEl, isShow: false})
-    } else {
+      this.showHideFn({ el: this.targetEl, isShow: false })
+    }
+    else {
       this.targetEl.style.cursor = 'none'
     }
   }
@@ -37,8 +38,9 @@ export class CursorHider {
     }
 
     if (typeof this.showHideFn === 'function') {
-      this.showHideFn({el: this.targetEl, isShow: true})
-    } else {
+      this.showHideFn({ el: this.targetEl, isShow: true })
+    }
+    else {
       this.targetEl.style.cursor = ''
     }
     this.runTimer()
@@ -54,7 +56,8 @@ export class CursorHider {
   handlePointerLockChange() {
     if (!document.pointerLockElement) {
       // console.log('Exit pointer lock')
-    } else {
+    }
+    else {
       this.hideCursor()
     }
   }
@@ -69,6 +72,6 @@ export class CursorHider {
     document.removeEventListener('pointerlockchange', this.handlePointerLockChange)
     document.removeEventListener('mousemove', this.throttledShowCursor)
     clearTimeout(this.timeoutID)
-    this.showHideFn({el: this.targetEl, isShow: true})
+    this.showHideFn({ el: this.targetEl, isShow: true })
   }
 }

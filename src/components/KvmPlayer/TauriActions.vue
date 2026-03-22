@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import {ref} from 'vue'
-import {window} from '@tauri-apps/api'
-import {uniOpenUrl} from '@/utils'
+import { window } from '@tauri-apps/api'
+import { ref } from 'vue'
 
-let curWin = window.getCurrent()
+const curWin = window.getCurrent()
 const isFullscreen = ref(false)
 function toggleFullScreen() {
   isFullscreen.value = !isFullscreen.value
@@ -18,14 +17,14 @@ function toggleTop() {
 
 <template>
   <button class="btn-no-style" @click="toggleFullScreen">
-    <span v-if="!isFullscreen" class="mdi mdi-fullscreen"></span>
-    <span v-else class="mdi mdi-fullscreen-exit"></span>
+    <span v-if="!isFullscreen" class="mdi mdi-fullscreen" />
+    <span v-else class="mdi mdi-fullscreen-exit" />
   </button>
   <button
     class="btn-no-style"
     :class="[isTop ? 'active' : '']"
-    @click="toggleTop"
     title="Pin window top"
+    @click="toggleTop"
   >
     {{ isTop ? '📌' : '🔝' }}
   </button>

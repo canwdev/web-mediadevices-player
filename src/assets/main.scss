@@ -21,7 +21,9 @@ body {
   margin: 0;
   background-color: #000000;
   color: white;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji';
 }
 
 .themed-input {
@@ -64,7 +66,7 @@ body {
     background-color: #4caf50 !important;
   }
   &.red {
-    background-color: #F44336 !important;
+    background-color: #f44336 !important;
   }
   &.yellow {
     background-color: #ffeb3b !important;
@@ -78,7 +80,6 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   color: white;
-
 
   &._light {
     background-color: rgba(250, 250, 250, 0.82);

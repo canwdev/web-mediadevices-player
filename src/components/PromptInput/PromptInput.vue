@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import {ref, toRefs, defineProps, defineEmits, watch} from 'vue'
-import {useVModel} from '@vueuse/core'
+import { useVModel } from '@vueuse/core'
+import { ref, watch } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -29,12 +29,13 @@ watch(mVisible, (val) => {
     setTimeout(() => {
       inputRef.value.focus()
     })
-  } else {
+  }
+  else {
     emit('cancel')
   }
 })
 
-const handleConfirm = async () => {
+async function handleConfirm() {
   if (props.validator) {
     const error = await props.validator(inputText.value)
     if (error) {
@@ -45,7 +46,7 @@ const handleConfirm = async () => {
   mVisible.value = false
 }
 
-const handleOutsideClick = () => {
+function handleOutsideClick() {
   if (props.closeOnClickOutside) {
     mVisible.value = false
   }
@@ -54,35 +55,25 @@ const handleOutsideClick = () => {
 
 <template>
   <transition name="fade">
-    <div class="popup-window" @keydown.stop @keyup.stop @click="handleOutsideClick" v-if="mVisible">
-      <form
-        ref="formRef"
-        @submit.prevent="handleConfirm"
-        @click.stop
-        class="popup-content panel-blur-bg"
-      >
-        <div v-if="title" class="popup-title">{{ title }}</div>
+    <div v-if="mVisible" class="popup-window" @keydown.stop @keyup.stop @click="handleOutsideClick">
+      <form ref="formRef" class="popup-content panel-blur-bg" @submit.prevent="handleConfirm" @click.stop>
+        <div v-if="title" class="popup-title">
+          {{ title }}
+        </div>
 
         <textarea
-          v-if="type === 'textarea'"
-          ref="inputRef"
-          class="themed-input"
-          v-bind="inputProps"
-          v-model="inputText"
+          v-if="type === 'textarea'" ref="inputRef" v-bind="inputProps" v-model="inputText" class="themed-input"
           required
         />
-        <input
-          v-else
-          ref="inputRef"
-          class="themed-input"
-          v-bind="inputProps"
-          v-model="inputText"
-          required
-        />
+        <input v-else ref="inputRef" v-bind="inputProps" v-model="inputText" class="themed-input" required>
 
         <div class="flex-row-center-gap">
-          <button class="themed-button blue" type="submit">OK</button>
-          <button type="button" class="themed-button" @click="mVisible = false">Cancel</button>
+          <button class="themed-button blue" type="submit">
+            OK
+          </button>
+          <button type="button" class="themed-button" @click="mVisible = false">
+            Cancel
+          </button>
         </div>
       </form>
     </div>
@@ -110,8 +101,7 @@ const handleOutsideClick = () => {
     flex-direction: column;
     gap: 8px;
 
-    .popup-title {
-    }
+    .popup-title {}
 
     input,
     button {
@@ -119,6 +109,7 @@ const handleOutsideClick = () => {
       padding-left: 10px;
       padding-right: 10px;
     }
+
     .flex-row-center-gap {
       justify-content: flex-end;
     }

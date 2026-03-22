@@ -7,19 +7,21 @@ A web application for playing system [video/audio] input devices using the [Medi
 - [Chinese Readme](./README.md)
 
 Main purposes:
+
 - View HDMI to USB capture card
 - Play webcam videos, desktop screen recording
 - Capture screenshots and record in webm format
 - v1.1.5 New features
-    - [CH9329](https://one-kvm.mofeng.run/ch9329_hid/) KVM keyboard and mouse control, ref: [webusbkvm](https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md)
-    - Supports relative mouse, absolute mouse, hotkeys, and ASCII text sending.
-    - Video screen QR code scanning
+  - [CH9329](https://one-kvm.mofeng.run/ch9329_hid/) KVM keyboard and mouse control, ref: [webusbkvm](https://github.com/kkocdko/kblog/blob/master/source/toys/webusbkvm/README.md)
+  - Supports relative mouse, absolute mouse, hotkeys, and ASCII text sending.
+  - Video screen QR code scanning
 
 ![screenshot](docs/screenshot-2.jpg)
 ![screenshot](docs/screenshot-3.jpg)
 ![screenshot](docs/screenshot.png)
 
 Tips:
+
 - The first time you use it, it will request camera and microphone permissions. You can reject microphone permissions if not needed. After requesting, it will wait a few seconds to load the devices.
 - This page must run in https or localhost environments. Other environments (such as: filesystem) do not have access to devices.
 - There may be issues with dragging the progress bar of the recorded webm video. Manually transcoding it to mp4 can solve the problem.

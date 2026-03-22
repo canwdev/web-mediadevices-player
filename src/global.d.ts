@@ -1,4 +1,4 @@
-import {INotification} from '@/components/NotificationList/notification-list'
+import type { INotification } from '@/components/NotificationList/notification-list'
 
 declare global {
   interface Window {

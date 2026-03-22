@@ -1,5 +1,5 @@
 class EventBus {
-  private events: {[key: string]: Function[]} = {}
+  private events: { [key: string]: Function[] } = {}
 
   // 注册事件监听器
   on(event: string, listener: Function): void {
@@ -12,15 +12,16 @@ class EventBus {
   // 触发事件
   emit(event: string, data?: any): void {
     if (this.events[event]) {
-      this.events[event].forEach((listener) => listener(data))
+      this.events[event].forEach(listener => listener(data))
     }
   }
 
   // 移除事件监听器
   off(event: string, listener: Function): void {
-    if (!this.events[event]) return
+    if (!this.events[event])
+      return
 
-    this.events[event] = this.events[event].filter((l) => l !== listener)
+    this.events[event] = this.events[event].filter(l => l !== listener)
   }
 }
 

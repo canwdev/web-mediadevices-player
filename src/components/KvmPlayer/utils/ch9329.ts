@@ -23,22 +23,25 @@ export enum CmdType {
   // 设置参数配置
   CMD_SET_PARA_CFG = 0x09,
   // 获取字符串描述信息
-  CMD_GET_USB_STRING = 0x0a,
+  CMD_GET_USB_STRING = 0x0A,
   // 设置字符串描述符配置
-  CMD_SET_USB_STRING = 0x0b,
+  CMD_SET_USB_STRING = 0x0B,
   // 恢复出厂默认配置
-  CMD_SET_DEFAULT_CFG = 0x0c,
+  CMD_SET_DEFAULT_CFG = 0x0C,
   // 复位芯片
-  CMD_RESET = 0x0f,
+  CMD_RESET = 0x0F,
 }
 
-export const genPacket = (cmd: CmdType, ...data: any[]) => {
+export function genPacket(cmd: CmdType, ...data: any[]) {
   // console.log(data)
-  for (const v of data) if (v < 0 || v > 0xff) throw v
+  for (const v of data) {
+    if (v < 0 || v > 0xFF)
+      throw v
+  }
   const ret = [
     // 帧头：占 2 个字节，固定为 0x57、0xAB
     0x57,
-    0xab,
+    0xAB,
     // 地址码：占 1 个字节，默认为 0x00
     0x00,
     // 命令码
@@ -57,20 +60,20 @@ export const genPacket = (cmd: CmdType, ...data: any[]) => {
 }
 
 // clamp to int8
-export const i8clamp = (v: number) => Math.max(-0x7f, Math.min(v, 0x7f))
+export const i8clamp = (v: number) => Math.max(-0x7F, Math.min(v, 0x7F))
 
 // 分解一个十六进制数为低字节和高字节，低字节在前，高字节在后
-export const decomposeHexToBytes = (hexNumber: number) => {
+export function decomposeHexToBytes(hexNumber: number) {
   // 确保输入是一个有效的十六进制数
   // if (typeof hexNumber !== 'number' || hexNumber < 0 || hexNumber > 0xFFFF) {
   //   throw new Error('请输入一个有效的16进制数（0到0xFFFF之间）');
   // }
 
   // 获取低字节（最后8位）
-  const lowByte = hexNumber & 0xff
+  const lowByte = hexNumber & 0xFF
 
   // 获取高字节（前8位）
-  const highByte = (hexNumber >> 8) & 0xff
+  const highByte = (hexNumber >> 8) & 0xFF
 
   return [lowByte, highByte]
 }
@@ -136,6 +139,6 @@ export const mediaKeyMatrix = [
 ]
 
 //  arr[1] -> 0b10000000, arr[2] -> 0b01000000, arr[6] -> 0b00000001
-export const indexToBinary = (index: number) => {
+export function indexToBinary(index: number) {
   return 1 << (7 - index) // 7 - index 确保将 1 移到适当的位上
 }

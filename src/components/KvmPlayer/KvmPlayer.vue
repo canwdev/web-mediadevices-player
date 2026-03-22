@@ -1,24 +1,26 @@
 <script setup lang="ts">
-import {onMounted, ref, computed, shallowRef, onBeforeUnmount, watch} from 'vue'
-import {useDocumentVisibility, useFullscreen, usePermission, useStorage} from '@vueuse/core'
-import {downloadUrl, snapVideoImage} from './utils/index'
-import TauriActions from '@/components/KvmPlayer/TauriActions.vue'
-import {VideoRecorder} from './utils/video-recorder'
-import {type IVideoConfig, useSettingsStore} from '@/stores/settings'
-import SettingsPrompt from '@/components/KvmPlayer/SettingsPrompt.vue'
-import KvmInput from '@/components/KvmPlayer/KvmInput.vue'
+import type { IVideoConfig } from '@/stores/settings'
+import { useDocumentVisibility, useFullscreen, usePermission, useStorage } from '@vueuse/core'
 import moment from 'moment/moment'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useActionBar } from '@/components/KvmPlayer/hooks/use-action-bar'
+import KvmInput from '@/components/KvmPlayer/KvmInput.vue'
 import QRScanner from '@/components/KvmPlayer/QRScanner.vue'
-import {useActionBar} from '@/components/KvmPlayer/hooks/use-action-bar'
+import SettingsPrompt from '@/components/KvmPlayer/SettingsPrompt.vue'
+import TauriActions from '@/components/KvmPlayer/TauriActions.vue'
 import DragButton from '@/components/KvmPlayer/UI/DragButton.vue'
+import { useSettingsStore } from '@/stores/settings'
+import { downloadUrl, snapVideoImage } from './utils/index'
 
-import {useI18n} from 'vue-i18n'
+import { VideoRecorder } from './utils/video-recorder'
 
-const {t: $t} = useI18n()
-const getEnumerateDevices = async () => {
+const { t: $t } = useI18n()
+async function getEnumerateDevices() {
   if (!navigator.mediaDevices?.enumerateDevices) {
     throw new Error('enumerateDevices() not supported.')
-  } else {
+  }
+  else {
     // List cameras and microphones.
     const devices: MediaDeviceInfo[] = await navigator.mediaDevices.enumerateDevices()
 
@@ -43,36 +45,38 @@ const isStreaming = computed(() => {
   return Boolean(mediaStreamRef.value)
 })
 
-const filterDeviceList = (list: MediaDeviceInfo[], kind: string) => {
-  return list.filter((item) => item.kind === kind && !!item.deviceId)
+function filterDeviceList(list: MediaDeviceInfo[], kind: string) {
+  return list.filter(item => item.kind === kind && !!item.deviceId)
 }
 
 const videoDeviceList = computed(() => {
-  return [{label: '---', deviceId: ''}, ...filterDeviceList(deviceList.value, 'videoinput')]
+  return [{ label: '---', deviceId: '' }, ...filterDeviceList(deviceList.value, 'videoinput')]
 })
 const audioDeviceList = computed(() => {
-  return [{label: '---', deviceId: ''}, ...filterDeviceList(deviceList.value, 'audioinput')]
+  return [{ label: '---', deviceId: '' }, ...filterDeviceList(deviceList.value, 'audioinput')]
 })
 
-const updateDeviceList = async () => {
+async function updateDeviceList() {
   try {
     loadingText.value = $t('app.updating_device_list')
     // console.log('updateDeviceList1')
     deviceList.value = await getEnumerateDevices()
     // console.log('updateDeviceList2')
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error(error)
     window.$notification({
       type: 'error',
       message: error.message,
       timeout: 5000,
     })
-  } finally {
+  }
+  finally {
     loadingText.value = ''
   }
 }
 
-const listenDeviceChange = () => {
+function listenDeviceChange() {
   // console.log('[listenDeviceChange]')
   navigator.mediaDevices.ondevicechange = async () => {
     // console.log('[ondevicechange]', event)
@@ -82,17 +86,17 @@ const listenDeviceChange = () => {
 
 const rootRef = shallowRef()
 
-const {actionBarRef, isShowFloatBar, isShowFloatBarInNonKvmMode} = useActionBar()
+const { actionBarRef, isShowFloatBar, isShowFloatBarInNonKvmMode } = useActionBar()
 
 const permissionCamera = usePermission('camera')
 const permissionMicrophone = usePermission('microphone')
 
-const requirePermission = () => {
+function requirePermission() {
   clearSelect()
   initDevices()
 }
 
-const initDevices = async () => {
+async function initDevices() {
   try {
     loadingText.value = $t('app.initializing_devices')
 
@@ -105,29 +109,33 @@ const initDevices = async () => {
 
     // catch error if this type of input device is not connected
     try {
-      mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({audio: true})
+      mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({ audio: true })
       stopMediaStreaming()
-    } catch (e) {
+    }
+    catch (e) {
       console.warn('getUserMedia audio Error:', e)
     }
     try {
-      mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({video: true})
+      mediaStreamRef.value = await navigator.mediaDevices.getUserMedia({ video: true })
       stopMediaStreaming()
-    } catch (e) {
+    }
+    catch (e) {
       console.warn('getUserMedia video Error:', e)
     }
 
     await updateDeviceList()
 
     listenDeviceChange()
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error(error)
     window.$notification({
       type: 'error',
       message: error.message,
       timeout: 5000,
     })
-  } finally {
+  }
+  finally {
     loadingText.value = ''
   }
 }
@@ -150,7 +158,7 @@ const graphInfo = ref({
  * 开启媒体设备视频流
  * https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
  */
-const startMediaStream = async () => {
+async function startMediaStream() {
   try {
     loadingText.value = $t('app.starting_media_stream')
 
@@ -161,7 +169,7 @@ const startMediaStream = async () => {
       return
     }
 
-    let vConfig: IVideoConfig | undefined = undefined
+    let vConfig: IVideoConfig | undefined
 
     if (videoId) {
       // 如果保存的id不匹配，则重新获取配置
@@ -172,7 +180,7 @@ const startMediaStream = async () => {
         console.log('vDevice', vDevice)
 
         if (vDevice) {
-          // @ts-ignore
+          // @ts-expect-error
           const conf = vDevice.getCapabilities()
           // console.log(conf)
           settingsStore.videoConfig = {
@@ -182,10 +190,12 @@ const startMediaStream = async () => {
             frameRate: conf.frameRate.max,
           }
           vConfig = settingsStore.videoConfig
-        } else {
-          vConfig = {deviceId: videoId}
         }
-      } else {
+        else {
+          vConfig = { deviceId: videoId }
+        }
+      }
+      else {
         vConfig = settingsStore.videoConfig
       }
     }
@@ -229,22 +239,24 @@ const startMediaStream = async () => {
       graphInfo.value = {
         width: video.videoWidth,
         height: video.videoHeight,
-        aspectRatio: parseFloat((video.videoWidth / video.videoHeight).toFixed(4)),
+        aspectRatio: Number.parseFloat((video.videoWidth / video.videoHeight).toFixed(4)),
       }
     }
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error(error)
     window.$notification({
       type: 'error',
       message: error.message,
       timeout: 5000,
     })
-  } finally {
+  }
+  finally {
     loadingText.value = ''
   }
 }
 
-const handleStartStreaming = () => {
+function handleStartStreaming() {
   stopMediaStreaming()
   setTimeout(() => {
     startMediaStream()
@@ -254,7 +266,7 @@ const handleStartStreaming = () => {
 /**
  * 停止视频/音频流
  */
-const stopMediaStreaming = () => {
+function stopMediaStreaming() {
   const video = videoRef.value
   video.pause()
   video.srcObject = null
@@ -265,7 +277,7 @@ const stopMediaStreaming = () => {
   const tracks = stream.getTracks()
   // console.log(tracks)
   tracks.forEach((track) => {
-    if (track.readyState == 'live') {
+    if (track.readyState === 'live') {
       track.stop()
     }
   })
@@ -275,7 +287,7 @@ const stopMediaStreaming = () => {
 /**
  * 停止并清除选择的设备
  */
-const clearSelect = () => {
+function clearSelect() {
   stopMediaStreaming()
   settingsStore.currentVideoDeviceId = ''
   settingsStore.currentAudioDeviceId = ''
@@ -283,13 +295,13 @@ const clearSelect = () => {
 }
 
 // 切换容器元素全屏
-const {toggle: toggleFullScreen, isFullscreen} = useFullscreen(rootRef)
+const { toggle: toggleFullScreen, isFullscreen } = useFullscreen(rootRef)
 
 /**
  * 开启屏幕投影
  * https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen_Capture
  */
-const handleStartStreamingCaptureScreen = async () => {
+async function handleStartStreamingCaptureScreen() {
   try {
     loadingText.value = $t('app.starting_capture_screen')
     clearSelect()
@@ -307,24 +319,26 @@ const handleStartStreamingCaptureScreen = async () => {
     video.onloadedmetadata = () => {
       video.play()
     }
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error(error)
     window.$notification({
       type: 'error',
       message: error.message,
       timeout: 5000,
     })
-  } finally {
+  }
+  finally {
     loadingText.value = ''
   }
 }
 
-const handleScreenshot = () => {
+function handleScreenshot() {
   const url = snapVideoImage(videoRef.value)
   downloadUrl(url, `screenshot_${moment().format('YYYY-MM-DD_HH-mm-ss')}.png`)
 }
 
-let videoRecorder = ref<VideoRecorder | null>(null)
+const videoRecorder = ref<VideoRecorder | null>(null)
 onMounted(() => {
   videoRecorder.value = new VideoRecorder(videoRef.value)
 })
@@ -338,14 +352,17 @@ const videoFilterStyle = computed(() => {
   }
   if (settingsStore.filterMirrorX && settingsStore.filterMirrorY) {
     style.transform += ` rotateX(180deg) rotateY(180deg)`
-  } else if (settingsStore.filterMirrorX) {
+  }
+  else if (settingsStore.filterMirrorX) {
     style.transform += ` rotateX(180deg)`
-  } else if (settingsStore.filterMirrorY) {
+  }
+  else if (settingsStore.filterMirrorY) {
     style.transform += ` rotateY(180deg)`
   }
   if (settingsStore.inputFilter) {
     style.filter = settingsStore.inputFilter
-  } else if (settingsStore.selectedFilters) {
+  }
+  else if (settingsStore.selectedFilters) {
     style.filter = settingsStore.selectedFilters.join(' ')
   }
   if (settingsStore.fitMode) {
@@ -357,7 +374,7 @@ const videoFilterStyle = computed(() => {
 const kvmInputRef = ref()
 const absMouseRef = ref()
 // 进入KVM控制模式
-const enterInputMode = () => {
+function enterInputMode() {
   if (!kvmInputRef.value) {
     return
   }
@@ -375,7 +392,8 @@ watch(visibility, (val) => {
         track.stop()
       }
     })
-  } else {
+  }
+  else {
     console.log('[Visibility] Page visible, resuming video stream...')
     if (settingsStore.currentVideoDeviceId) {
       startMediaStream()
@@ -385,9 +403,9 @@ watch(visibility, (val) => {
 
 const isActionBarVisible = computed(() => {
   return (
-    (isShowFloatBar.value && settingsStore.floatUI && settingsStore.enableKvmInput) ||
-    !settingsStore.floatUI ||
-    (!settingsStore.enableKvmInput && isShowFloatBarInNonKvmMode.value)
+    (isShowFloatBar.value && settingsStore.floatUI && settingsStore.enableKvmInput)
+    || !settingsStore.floatUI
+    || (!settingsStore.enableKvmInput && isShowFloatBarInNonKvmMode.value)
   )
 })
 </script>
@@ -395,9 +413,11 @@ const isActionBarVisible = computed(() => {
 <template>
   <div ref="rootRef" class="web-mediadevices-player" @click="enterInputMode">
     <transition name="fade">
-      <div class="loading-layer" v-if="loadingText">⌛ {{ loadingText }}</div>
+      <div v-if="loadingText" class="loading-layer">
+        ⌛ {{ loadingText }}
+      </div>
     </transition>
-    <div @click.stop :class="[settingsStore.floatUI ? 'float-ui' : null]" class="action-bar-wrap">
+    <div :class="[settingsStore.floatUI ? 'float-ui' : null]" class="action-bar-wrap" @click.stop>
       <DragButton
         v-if="settingsStore.floatUI && settingsStore.enableKvmInput"
         :docked="!isShowFloatBar"
@@ -414,20 +434,20 @@ const isActionBarVisible = computed(() => {
         ]"
       >
         <transition name="fade-left">
-          <div style="transition-delay: 0.3s" v-show="isActionBarVisible" class="action-bar-side">
+          <div v-show="isActionBarVisible" style="transition-delay: 0.3s" class="action-bar-side">
             <div class="flex-row-center-gap">
               <label
                 class="select-label-wrapper"
                 for="videoSelect"
                 :title="$t('app.select_video_device')"
-                :class="{activated: settingsStore.currentVideoDeviceId}"
+                :class="{ activated: settingsStore.currentVideoDeviceId }"
               >
-                <span class="mdi mdi-monitor"></span>
+                <span class="mdi mdi-monitor" />
                 <template v-if="permissionCamera === 'granted'">
                   <select
-                    class="btn-no-style"
                     id="videoSelect"
                     v-model="settingsStore.currentVideoDeviceId"
+                    class="btn-no-style"
                     @change="handleStartStreaming"
                   >
                     <option
@@ -440,9 +460,9 @@ const isActionBarVisible = computed(() => {
                   </select>
                 </template>
                 <button
+                  v-else
                   :title="permissionCamera"
                   class="btn-no-style icon-alert"
-                  v-else
                   @click="requirePermission"
                 >
                   ⚠️
@@ -453,14 +473,14 @@ const isActionBarVisible = computed(() => {
                 class="select-label-wrapper"
                 for="audioSelect"
                 :title="$t('app.select_audio_device')"
-                :class="{activated: settingsStore.currentAudioDeviceId}"
+                :class="{ activated: settingsStore.currentAudioDeviceId }"
               >
-                <span class="mdi mdi-speaker"></span>
+                <span class="mdi mdi-volume-high" />
                 <template v-if="permissionMicrophone === 'granted'">
                   <select
-                    class="btn-no-style"
                     id="audioSelect"
                     v-model="settingsStore.currentAudioDeviceId"
+                    class="btn-no-style"
                     @change="handleStartStreaming"
                   >
                     <option
@@ -473,9 +493,9 @@ const isActionBarVisible = computed(() => {
                   </select>
                 </template>
                 <button
+                  v-else
                   class="btn-no-style icon-alert"
                   :title="permissionMicrophone"
-                  v-else
                   @click="requirePermission"
                 >
                   ⚠️
@@ -483,72 +503,72 @@ const isActionBarVisible = computed(() => {
               </label>
 
               <button
-                class="btn-no-style orange"
-                @click="stopMediaStreaming"
                 v-if="isStreaming"
+                class="btn-no-style orange"
                 :title="$t('app.stop_media_devices')"
+                @click="stopMediaStreaming"
               >
-                <span class="mdi mdi-stop-circle-outline"></span>
+                <span class="mdi mdi-stop-circle-outline" />
               </button>
               <button
+                v-else
                 class="btn-no-style green"
                 :title="$t('app.start_media_devices')"
                 @click="handleStartStreaming"
-                v-else
               >
-                <span class="mdi mdi-play-circle-outline"></span>
+                <span class="mdi mdi-play-circle-outline" />
               </button>
               <button
                 class="btn-no-style"
-                @click="clearSelect"
                 :title="$t('app.reset_all_media_devices')"
+                @click="clearSelect"
               >
-                <span class="mdi mdi-close-circle-outline"></span>
+                <span class="mdi mdi-close-circle-outline" />
               </button>
 
               <button :title="$t('app.more')" class="btn-no-style" @click="isFolded = !isFolded">
-                <span v-if="!isFolded" class="mdi mdi-chevron-left"></span>
-                <span v-else class="mdi mdi-chevron-right"></span>
+                <span v-if="!isFolded" class="mdi mdi-chevron-left" />
+                <span v-else class="mdi mdi-chevron-right" />
               </button>
 
               <transition name="fade-right">
                 <div v-show="!isFolded" class="action-bar-side">
                   <button
                     class="btn-no-style"
-                    @click="handleStartStreamingCaptureScreen"
                     :title="$t('app.capture_screen')"
+                    @click="handleStartStreamingCaptureScreen"
                   >
-                    <span class="mdi mdi-cast-variant"></span>
+                    <span class="mdi mdi-cast-variant" />
                   </button>
 
                   <QRScanner :disabled="!isStreaming" />
 
                   <button
                     class="btn-no-style"
-                    @click="handleScreenshot"
                     :disabled="!isStreaming"
                     :title="$t('app.screenshot')"
+                    @click="handleScreenshot"
                   >
-                    <span class="mdi mdi-monitor-screenshot"></span>
+                    <span class="mdi mdi-monitor-screenshot" />
                   </button>
 
                   <template v-if="videoRecorder">
                     <button
-                      class="btn-no-style recording"
                       v-if="Boolean(videoRecorder.mediaRecorder)"
-                      @click="videoRecorder.stop()"
+                      class="btn-no-style recording"
                       :title="$t('app.recording_click_to_save_record')"
+                      @click="videoRecorder.stop()"
                     >
-                      <span class="mdi mdi-record"></span>
+                      <span class="mdi mdi-record" />
                     </button>
                     <button
                       v-else
                       class="btn-no-style"
-                      @click="videoRecorder.start()"
                       :disabled="!isStreaming"
                       :title="$t('app.record')"
+                      @click="videoRecorder.start()"
                     >
-                      <span class="mdi mdi-record-circle-outline"></span>
+                      <span class="mdi mdi-record-circle-outline" />
                     </button>
                   </template>
                 </div>
@@ -559,8 +579,8 @@ const isActionBarVisible = computed(() => {
 
         <transition name="fade-right">
           <div
-            style="transition-delay: 0.3s"
             v-show="isActionBarVisible"
+            style="transition-delay: 0.3s"
             class="action-bar-side right"
           >
             <template v-if="settingsStore.enableKvmInput">
@@ -569,24 +589,24 @@ const isActionBarVisible = computed(() => {
             </template>
 
             <button
-              @click="showSettings = !showSettings"
               :title="$t('app.settings')"
               class="btn-no-style"
+              @click="showSettings = !showSettings"
             >
-              <span class="mdi mdi-cog"></span>
+              <span class="mdi mdi-cog" />
             </button>
             <button
               v-if="!isTauri"
-              @click="toggleFullScreen"
               class="btn-no-style"
               :title="$t('app.fullscreen')"
+              @click="toggleFullScreen"
             >
-              <span v-if="!isFullscreen" class="mdi mdi-fullscreen"></span>
-              <span v-else class="mdi mdi-fullscreen-exit"></span>
+              <span v-if="!isFullscreen" class="mdi mdi-fullscreen" />
+              <span v-else class="mdi mdi-fullscreen-exit" />
 
-              <!--{{ isFullscreen ? '🗔' : '⛶' }}-->
-              <!--&#x26F6;-->
-              <!--╳-->
+              <!-- {{ isFullscreen ? '🗔' : '⛶' }} -->
+              <!-- &#x26F6; -->
+              <!-- ╳ -->
               <!-- https://www.compart.com/en/unicode/category/So -->
             </button>
             <TauriActions v-if="isTauri" />
@@ -598,41 +618,41 @@ const isActionBarVisible = computed(() => {
     <div class="main-graph-wrapper">
       <div
         class="video-wrapper"
-        @dblclick.stop="toggleFullScreen"
         :style="
           settingsStore.fitMode === 'contain'
-            ? {aspectRatio: graphInfo.aspectRatio}
-            : {width: '100%', height: '100%'}
+            ? { aspectRatio: graphInfo.aspectRatio }
+            : { width: '100%', height: '100%' }
         "
+        @dblclick.stop="toggleFullScreen"
       >
         <div
           v-show="settingsStore.enableKvmInput && settingsStore.cursorMode === 'absolute'"
           class="abs-mouse-container"
         >
           <div
-            class="abs-mouse-area"
-            :class="{showBorder: showSettings}"
             ref="absMouseRef"
+            class="abs-mouse-area"
+            :class="{ showBorder: showSettings }"
             :style="{
-              width: settingsStore.absMouseAreaWidth + '%',
-              height: settingsStore.absMouseAreaHeight + '%',
+              width: `${settingsStore.absMouseAreaWidth}%`,
+              height: `${settingsStore.absMouseAreaHeight}%`,
             }"
-          ></div>
+          />
         </div>
         <video
-          ref="videoRef"
           id="streamVideo"
+          ref="videoRef"
           autoplay
           playsinline
           :controls="settingsStore.isShowControls"
           :style="videoFilterStyle"
-        ></video>
+        />
       </div>
     </div>
 
-    <div class="video-fg-layer" v-if="settingsStore.filterShowFg"></div>
+    <div v-if="settingsStore.filterShowFg" class="video-fg-layer" />
 
-    <SettingsPrompt @click.stop v-model:visible="showSettings" :graph-info="graphInfo" />
+    <SettingsPrompt v-model:visible="showSettings" :graph-info="graphInfo" @click.stop />
   </div>
 </template>
 

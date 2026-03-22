@@ -1,4 +1,5 @@
-import {ref, createApp, h, App} from 'vue'
+import type { App } from 'vue'
+import { createApp, h, ref } from 'vue'
 import NotificationList from './NotificationList.vue'
 
 export interface INotification {
@@ -11,7 +12,7 @@ export interface INotification {
 
 const notifications = ref<INotification[]>([])
 
-const push = (notification: Partial<INotification>) => {
+function push(notification: Partial<INotification>) {
   if (!notification.timestamp) {
     notification.timestamp = Date.now()
   }
@@ -25,7 +26,7 @@ const push = (notification: Partial<INotification>) => {
 }
 
 let app: App
-const createComponent = () => {
+function createComponent() {
   app = createApp({
     setup() {
       // 使用 render 函数代替 TSX
@@ -42,7 +43,7 @@ const createComponent = () => {
   app.mount(container)
 }
 
-export const addNotification = (notification: Partial<INotification>) => {
+export function addNotification(notification: Partial<INotification>) {
   if (!app) {
     createComponent()
   }

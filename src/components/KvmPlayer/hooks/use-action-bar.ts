@@ -1,9 +1,9 @@
-import {onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue'
-import {useSettingsStore} from '@/stores/settings'
-import {CursorHider} from '@/components/KvmPlayer/utils/cursor-hider'
-import {useStorage} from '@vueuse/core'
+import { useStorage } from '@vueuse/core'
+import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { CursorHider } from '@/components/KvmPlayer/utils/cursor-hider'
+import { useSettingsStore } from '@/stores/settings'
 
-export const useActionBar = () => {
+export function useActionBar() {
   const mouseHider = shallowRef()
   const actionBarRef = shallowRef()
   const settingsStore = useSettingsStore()
@@ -16,7 +16,8 @@ export const useActionBar = () => {
       if (mouseHider.value) {
         if (!val) {
           mouseHider.value.start()
-        } else {
+        }
+        else {
           mouseHider.value.stop()
         }
       }
@@ -29,11 +30,12 @@ export const useActionBar = () => {
   onMounted(() => {
     mouseHider.value = new CursorHider(
       '#app',
-      ({el, isShow}) => {
+      ({ el, isShow }) => {
         if (!isShow) {
           el.style.cursor = 'none'
           isShowFloatBarInNonKvmMode.value = false
-        } else {
+        }
+        else {
           el.style.cursor = ''
           isShowFloatBarInNonKvmMode.value = true
         }

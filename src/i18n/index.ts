@@ -1,8 +1,8 @@
-import { createI18n } from 'vue-i18n'
-import zhCN from './locales/zh-CN/index.json'
-import enUS from './locales/en-US/index.json'
 import { useStorage } from '@vueuse/core'
 import { watch } from 'vue'
+import { createI18n } from 'vue-i18n'
+import enUS from './locales/en-US/index.json'
+import zhCN from './locales/zh-CN/index.json'
 
 export const localeList = [
   { label: '简体中文', value: 'zh-CN' },
@@ -10,7 +10,7 @@ export const localeList = [
 ]
 
 // 获取浏览器语言
-const getBrowserLanguage = () => {
+function getBrowserLanguage() {
   const navigatorLanguage = navigator.language
   if (navigatorLanguage.includes('zh')) {
     return 'zh-CN'

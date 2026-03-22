@@ -2,13 +2,14 @@
  * https://github.com/yugasun/qrcode-decoder/blob/master/src/index.ts
  */
 
-import jsQR, {QRCode, Options} from 'jsqr'
+import type { Options, QRCode } from 'jsqr'
+import jsQR from 'jsqr'
 
 export type CodeResult = QRCode | null
 
 const videoSize = {
-  width: {min: 360, ideal: 720, max: 1080},
-  height: {min: 360, ideal: 720, max: 1080},
+  width: { min: 360, ideal: 720, max: 1080 },
+  height: { min: 360, ideal: 720, max: 1080 },
 }
 
 export class QrcodeDecoder {
@@ -30,11 +31,11 @@ export class QrcodeDecoder {
     this.getUserMediaHandler = null
     this.videoConstraints = {
       // default use rear camera
-      video: {...videoSize, facingMode: {exact: 'environment'}},
+      video: { ...videoSize, facingMode: { exact: 'environment' } },
       audio: false,
     }
 
-    this.defaultOption = {inversionAttempts: 'attemptBoth'}
+    this.defaultOption = { inversionAttempts: 'attemptBoth' }
   }
 
   /**
@@ -96,7 +97,7 @@ export class QrcodeDecoder {
    * canvas so that the decoder is able to work as
    * it expects.
    * @param  {DOMElement} videoElem <video> dom element
-   * @param  {Object} options     options (optional) - Additional options.
+   * @param  {object} options     options (optional) - Additional options.
    *  inversionAttempts - (attemptBoth (default), dontInvert, onlyInvert, or invertFirst)
    *  refer to jsqr options: https://github.com/cozmo/jsQR
    */
@@ -118,13 +119,15 @@ export class QrcodeDecoder {
 
           if (code) {
             resolve(code)
-          } else {
+          }
+          else {
             this.timerCapture = setTimeout(async () => {
               code = await this._captureToCanvas(videoElem, options)
               resolve(code)
             }, 500)
           }
-        } else {
+        }
+        else {
           this.timerCapture = setTimeout(async () => {
             code = await this._captureToCanvas(videoElem, options)
             resolve(code)
@@ -146,7 +149,7 @@ export class QrcodeDecoder {
    * was any (resets).
    *
    * @param  {DOMElement} videoElem <video> dom element
-   * @param  {Object} options     options (optional) - Additional options.
+   * @param  {object} options     options (optional) - Additional options.
    *  inversionAttempts - (attemptBoth (default), dontInvert, onlyInvert, or invertFirst)
    *  refer to jsqr options: https://github.com/cozmo/jsQR
    */
@@ -158,13 +161,14 @@ export class QrcodeDecoder {
 
     this.stop()
     if (!navigator.mediaDevices.getUserMedia) {
-      throw new Error("Couldn't get video from camera")
+      throw new Error('Couldn\'t get video from camera')
     }
 
     let stream: MediaStream
     try {
       stream = await navigator.mediaDevices.getUserMedia(this.videoConstraints)
-    } catch (e) {
+    }
+    catch (e) {
       if ((e as OverconstrainedError).name === 'OverconstrainedError') {
         console.log('[OverconstrainedError] Can not use rear camera.')
 
@@ -178,7 +182,8 @@ export class QrcodeDecoder {
           },
           audio: false,
         })
-      } else {
+      }
+      else {
         throw e
       }
     }
@@ -200,7 +205,7 @@ export class QrcodeDecoder {
    * Prepares the video element for video file.
    *
    * @param  {DOMElement} videoElem <video> dom element
-   * @param  {Object} options     options (optional) - Additional options.
+   * @param  {object} options     options (optional) - Additional options.
    *  inversionAttempts - (attemptBoth (default), dontInvert, onlyInvert, or invertFirst)
    *  refer to jsqr options: https://github.com/cozmo/jsQR
    */
@@ -213,7 +218,8 @@ export class QrcodeDecoder {
       this.videoElem = videoElem
       const code = await this._captureToCanvas(videoElem, opts)
       return code
-    } catch (e) {
+    }
+    catch (e) {
       throw e
     }
   }
@@ -221,13 +227,13 @@ export class QrcodeDecoder {
   /**
    * Decodes an image from its src.
    * @param  {DOMElement} imageElem
-   * @param  {Object} options     options (optional) - Additional options.
+   * @param  {object} options     options (optional) - Additional options.
    *  inversionAttempts - (attemptBoth (default), dontInvert, onlyInvert, or invertFirst)
    *  refer to jsqr options: https://github.com/cozmo/jsQR
    */
   async decodeFromImage(
     img: HTMLImageElement | string,
-    options: {crossOrigin?: string} = {},
+    options: { crossOrigin?: string } = {},
   ): Promise<CodeResult> {
     let imgDom: HTMLImageElement | null = null
     const opts = {
@@ -246,7 +252,8 @@ export class QrcodeDecoder {
           imgDom!.onload = () => resolve(true)
         })
       await proms()
-    } else if (+img.nodeType > 0) {
+    }
+    else if (+img.nodeType > 0) {
       if (!img.src) {
         throw new Error('The ImageElement must contain a src')
       }
@@ -304,9 +311,10 @@ export class QrcodeDecoder {
   setGroupId(groupId: string) {
     if (groupId) {
       this.videoConstraints.video = {
-        advanced: [{groupId}],
+        advanced: [{ groupId }],
       }
-    } else {
+    }
+    else {
       this.videoConstraints.video = true
     }
 
@@ -326,7 +334,8 @@ export class QrcodeDecoder {
         }
         return false
       })
-    } else {
+    }
+    else {
       throw new Error('Current browser doest not support MediaStreamTrack.getSources')
     }
   }

@@ -8,7 +8,7 @@ export function snapVideoImage(video: HTMLVideoElement) {
   return canvas.toDataURL('image/png')
 }
 
-export const downloadUrl = (url: string, filename?) => {
+export function downloadUrl(url: string, filename?) {
   // 创建一个虚拟的 <a> 标签
   const a = document.createElement('a')
   // 设置 href 为文件的 URL
@@ -27,7 +27,7 @@ export const downloadUrl = (url: string, filename?) => {
  * 复制字符串到剪贴板操作（兼容新旧接口）
  * @param text 要复制的文本
  */
-export const copyToClipboard = (text): Promise<void> => {
+export function copyToClipboard(text): Promise<void> {
   return new Promise((resolve, reject) => {
     // 如果支持 Clipboard API，就使用它
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -39,7 +39,8 @@ export const copyToClipboard = (text): Promise<void> => {
         .catch((error) => {
           reject(error)
         })
-    } else {
+    }
+    else {
       // 使用 document.execCommand 兼容旧 API
       const textarea = document.createElement('textarea')
       textarea.value = text
@@ -51,19 +52,22 @@ export const copyToClipboard = (text): Promise<void> => {
         const success = document.execCommand('copy')
         if (!success) {
           throw new Error('Unable to perform copy operation')
-        } else {
+        }
+        else {
           resolve()
         }
-      } catch (error) {
+      }
+      catch (error) {
         reject(error)
-      } finally {
+      }
+      finally {
         document.body.removeChild(textarea)
       }
     }
   })
 }
 
-export const copy = async (val, isShowVal = true) => {
+export async function copy(val, isShowVal = true) {
   if (!val) {
     return
   }
@@ -80,13 +84,14 @@ export const copy = async (val, isShowVal = true) => {
   let showVal = ''
   if (isShowVal) {
     if (val.length > 350) {
-      showVal = val.slice(0, 350) + '...'
-    } else {
+      showVal = `${val.slice(0, 350)}...`
+    }
+    else {
       showVal = val
     }
   }
   if (showVal) {
-    showVal = ': ' + showVal
+    showVal = `: ${showVal}`
   }
   window.$notification({
     type: 'success',
@@ -95,4 +100,4 @@ export const copy = async (val, isShowVal = true) => {
   })
 }
 
-export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))

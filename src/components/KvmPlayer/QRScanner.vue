@@ -1,15 +1,15 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { copy } from '@/components/KvmPlayer/utils'
 import QrcodeDecoder from '@/components/KvmPlayer/utils/qrcode-decoder'
-import {copy} from '@/components/KvmPlayer/utils'
-import {onBeforeUnmount, onMounted, ref} from 'vue'
-import {eventBus} from '@/utils/event-bus'
 
-import {useI18n} from 'vue-i18n'
+import { eventBus } from '@/utils/event-bus'
 
-const {t: $t} = useI18n()
+const { t: $t } = useI18n()
 const isLoading = ref()
 let qr: QrcodeDecoder | null = null
-const startScan = async () => {
+async function startScan() {
   if (qr) {
     qr.stop()
     qr = null
@@ -26,20 +26,22 @@ const startScan = async () => {
     console.log(res)
 
     await copy(res.data)
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error(error)
     window.$notification({
       type: 'error',
       message: error.message,
       timeout: 3000,
     })
-  } finally {
+  }
+  finally {
     isLoading.value = false
     qr = null
   }
 }
 
-const startScanUploadImage = async () => {
+async function startScanUploadImage() {
   if (qr) {
     qr.stop()
     qr = null
@@ -58,7 +60,8 @@ const startScanUploadImage = async () => {
     // 添加 change 事件监听器
     fileInput.addEventListener('change', async (event) => {
       const file = event.target.files[0]
-      if (!file) return
+      if (!file)
+        return
 
       try {
         const imgSrc = await readFile(file)
@@ -68,27 +71,30 @@ const startScanUploadImage = async () => {
         console.log(res)
 
         await copy(res.data)
-      } catch (error) {
+      }
+      catch (error) {
         console.error(error)
       }
     })
 
     fileInput.click()
-  } catch (error) {
+  }
+  catch (error) {
     console.error(error)
     window.$notification({
       type: 'error',
       message: error.message,
       timeout: 3000,
     })
-  } finally {
+  }
+  finally {
     isLoading.value = false
     qr = null
   }
 }
 
 // 使用 Promise 封装 FileReader
-const readFile = (file) => {
+function readFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result)
@@ -98,7 +104,7 @@ const readFile = (file) => {
 }
 
 // 使用 Promise 封装图像加载
-const loadImage = (src) => {
+function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.src = src
@@ -121,11 +127,11 @@ onBeforeUnmount(() => {
   <button
     class="btn-qr-scanner btn-no-style"
     :title="$t('app.qr_code_scanner_right_click_uplo')"
-    :class="{active: isLoading}"
+    :class="{ active: isLoading }"
     @click="startScan"
     @contextmenu.prevent="startScanUploadImage"
   >
-    <span class="mdi mdi-qrcode-scan"></span>
+    <span class="mdi mdi-qrcode-scan" />
   </button>
 </template>
 
