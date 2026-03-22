@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import {onBeforeUnmount, onMounted, Ref, ref, shallowRef, watch} from 'vue'
 import {createPrompt} from '@/components/PromptInput/prompt-input'
 import {useEventListener, usePointerLock, useThrottleFn, useWindowFocus} from '@vueuse/core'
@@ -17,7 +17,9 @@ import {useSettingsStore} from '@/stores/settings'
 import {sleep} from '@/components/KvmPlayer/utils'
 import {eventBus} from '@/utils/event-bus'
 import {SerialPort} from 'web-serial-polyfill'
+import {useI18n} from 'vue-i18n'
 
+const {t: $t} = useI18n()
 const emit = defineEmits(['connected', 'disconnected'])
 
 const settingsStore = useSettingsStore()
@@ -27,7 +29,7 @@ const writeSerial = (...args: any) => {
   if (!writer.value) {
     window.$notification({
       type: 'error',
-      message: 'Serial port not initialized',
+      message: $t('app.serial_port_not_initialized'),
       timeout: 3000,
     })
     return
@@ -334,7 +336,7 @@ watch(
 )
 
 const showSendInput = async () => {
-  const text = await createPrompt('', 'Send Text', {
+  const text = await createPrompt('', $t('app.send_text'), {
     type: 'textarea',
     inputProps: {
       rows: 10,
@@ -426,20 +428,20 @@ const selectedTransfer = ref('')
 const transferOptions = [
   {
     value: '',
-    label: 'Text Transfer',
+    label: $t('app.text_transfer'),
     disabled: true,
     hidden: true,
   },
   {
     value: 'send_text',
-    label: 'Send Text...',
+    label: $t('app.send_text_2'),
     action() {
       showSendInput()
     },
   },
   {
     value: 'send_clipboard',
-    label: 'Send Clipboard',
+    label: $t('app.send_clipboard'),
     async action() {
       const text = await navigator.clipboard.readText()
       sendText(text)
@@ -447,14 +449,14 @@ const transferOptions = [
   },
   {
     value: 'scan_qr',
-    label: 'Scan QR Code',
+    label: $t('app.scan_qr_code'),
     async action() {
       eventBus.emit('scan_qr')
     },
   },
   {
     value: 'scan_qr_from_image',
-    label: 'Scan QR Code From Image...',
+    label: $t('app.scan_qr_code_from_image'),
     async action() {
       eventBus.emit('scan_qr_from_image')
     },
@@ -472,7 +474,7 @@ const handleTransferSelect = async () => {
 
 const selectedComboKey = ref('')
 const specialKeyOptions = [
-  {value: '', label: 'Select Combo Keys', disabled: true, hidden: true},
+  {value: '', label: $t('app.select_combo_keys'), disabled: true, hidden: true},
   {
     value: 'ctrl_alt_del',
     label: 'Ctrl + Alt + Del',
@@ -597,41 +599,41 @@ const handleSendComboKey = async () => {
 
 const selectedMediaKey = ref('')
 const mediaKeyACPIOptions = [
-  {value: 0b00000100, label: '🌅 Wake-up'},
-  {value: 0b00000010, label: '💤 Sleep'},
-  {value: 0b00000001, label: '🔌 Power'},
+  {value: 0b00000100, label: $t('app.wake_up')},
+  {value: 0b00000010, label: $t('app.sleep')},
+  {value: 0b00000001, label: $t('app.power')},
 ]
 const mediaKeyCommonGroups = [
   {
-    label: 'Media Control',
+    label: $t('app.media_control'),
     children: [
-      {value: MediaKey.PREV_TRACK, label: '🔙 Previous Track'},
-      {value: MediaKey.NEXT_TRACK, label: '🔜 Next Track'},
-      {value: MediaKey.CD_STOP, label: '⏹️ CD Stop'},
-      {value: MediaKey.PLAY_PAUSE, label: '▶️ Play/Pause'},
-      {value: MediaKey.MUTE, label: '🔇 Mute'},
-      {value: MediaKey.VOLUME_PLUS, label: '🔊 Volume Up'},
-      {value: MediaKey.VOLUME_MINUS, label: '🔉 Volume Down'},
+      {value: MediaKey.PREV_TRACK, label: $t('app.previous_track')},
+      {value: MediaKey.NEXT_TRACK, label: $t('app.next_track')},
+      {value: MediaKey.CD_STOP, label: $t('app.cd_stop')},
+      {value: MediaKey.PLAY_PAUSE, label: $t('app.play_pause')},
+      {value: MediaKey.MUTE, label: $t('app.mute')},
+      {value: MediaKey.VOLUME_PLUS, label: $t('app.volume_up')},
+      {value: MediaKey.VOLUME_MINUS, label: $t('app.volume_down')},
     ],
   },
   {
-    label: 'Browser',
+    label: $t('app.browser'),
     children: [
-      {value: MediaKey.REFRESH, label: '🔄 Refresh'},
-      {value: MediaKey.STOP, label: '⏹️ Stop'},
-      {value: MediaKey.FORWARD, label: '➡️ Forward'},
-      {value: MediaKey.BACK, label: '⬅️ Back'},
-      {value: MediaKey.HOME, label: '🏠 Home'},
-      {value: MediaKey.SEARCH, label: '🔍 Search'},
+      {value: MediaKey.REFRESH, label: $t('app.refresh')},
+      {value: MediaKey.STOP, label: $t('app.stop')},
+      {value: MediaKey.FORWARD, label: $t('app.forward')},
+      {value: MediaKey.BACK, label: $t('app.back')},
+      {value: MediaKey.HOME, label: $t('app.home_2')},
+      {value: MediaKey.SEARCH, label: $t('app.search')},
     ],
   },
   {
-    label: 'Apps',
+    label: $t('app.apps'),
     children: [
-      {value: MediaKey.E_MAIL, label: '📧 E-Mail'},
-      {value: MediaKey.MY_COMPUTER, label: '💻 My Computer'},
-      {value: MediaKey.CALCULATOR, label: '🧮 Calculator'},
-      {value: MediaKey.MEDIA, label: '🎵 Media'},
+      {value: MediaKey.E_MAIL, label: $t('app.e_mail')},
+      {value: MediaKey.MY_COMPUTER, label: $t('app.my_computer')},
+      {value: MediaKey.CALCULATOR, label: $t('app.calculator')},
+      {value: MediaKey.MEDIA, label: $t('app.media')},
     ],
   },
 ]
@@ -698,19 +700,19 @@ defineExpose({
       v-if="!serialPort"
       @click="initSerial"
       class="btn-no-style blue"
-      title="🔌 Connect Serial"
+      :title="$t('app.connect_serial')"
     >
       <span class="mdi mdi-connection"></span>
     </button>
     <template v-else>
-      <button @click="closeSerial" class="btn-no-style orange" title="Close Serial">
+      <button @click="closeSerial" class="btn-no-style orange" :title="$t('app.close_serial')">
         <span class="mdi mdi-lan-disconnect"></span>
       </button>
       <!--<button @click="lock(rootRef)" class="btn-no-style blue">Capture Mouse</button>-->
 
       <label
         class="select-label-wrapper"
-        title="Text Transfer"
+        :title="$t('app.text_transfer')"
         :class="{activated: selectedTransfer !== ''}"
       >
         <span class="mdi mdi-card-text"></span>
@@ -729,7 +731,7 @@ defineExpose({
 
       <label
         class="select-label-wrapper"
-        title="⌨️ Send Combo Keys"
+        :title="$t('app.send_combo_keys')"
         :class="{activated: selectedComboKey !== ''}"
       >
         <span class="mdi mdi-keyboard-close-outline"></span>
@@ -748,12 +750,12 @@ defineExpose({
 
       <label
         class="select-label-wrapper"
-        title="⌨️ Send Media Keys"
+        :title="$t('app.send_media_keys')"
         :class="{activated: selectedMediaKey !== ''}"
       >
         <span class="mdi mdi-keyboard-close"></span>
         <select v-model="selectedMediaKey" class="btn-no-style" @change="handleSendMedialKey">
-          <option :value="''" disabled hidden>Select Media Keys</option>
+          <option :value="''" disabled hidden>{{ $t('app.select_media_keys') }}</option>
           <optgroup label="ACPI">
             <option v-for="item in mediaKeyACPIOptions" :key="item.value" :value="item.value">
               {{ item.label }}
@@ -770,7 +772,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .kvm-input {
   outline: none;
 }
