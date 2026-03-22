@@ -8,7 +8,6 @@ export interface IVideoConfig {
 }
 
 interface ISettings {
-  isShowControls: boolean
   fitMode: string
   floatUI: boolean
   enableKvmInput: boolean
@@ -36,7 +35,6 @@ interface ISettings {
 export const useSettingsStore = defineStore('settingsStore', {
   state: (): ISettings => {
     return {
-      isShowControls: false,
       fitMode: 'contain',
       floatUI: true,
       enableKvmInput: false,

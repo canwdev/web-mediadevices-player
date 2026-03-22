@@ -653,7 +653,6 @@ const isActionBarVisible = computed(() => {
           ref="videoRef"
           autoplay
           playsinline
-          :controls="settingsStore.isShowControls"
           :style="videoFilterStyle"
         />
       </div>

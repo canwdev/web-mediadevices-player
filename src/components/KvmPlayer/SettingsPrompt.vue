@@ -80,11 +80,20 @@ function showCursorModeTip() {
               <option v-for="v in ['contain', 'fill', 'cover', 'none']" :key="v">{{ v }}</option>
             </select>
           </label>
-
-          <!-- <label title="Toggle video element controls" class="cursor-pointer"> -->
-          <!--  <input type="checkbox" v-model="settingsStore.isShowControls" /> -->
-          <!--  <span>Video Controls UI</span> -->
-          <!-- </label> -->
+          <div v-if="settingsStore.videoConfig" class="control-flex-group">
+            <label>
+              <span>W</span>
+              <input v-model="settingsStore.videoConfig.width" type="number" class="themed-input">
+            </label>
+            <label>
+              <span>H</span>
+              <input v-model="settingsStore.videoConfig.height" type="number" class="themed-input">
+            </label>
+            <label>
+              <span>FPS</span>
+              <input v-model="settingsStore.videoConfig.frameRate" type="number" class="themed-input">
+            </label>
+          </div>
 
           <label class="cursor-pointer">
             <input v-model="settingsStore.floatUI" type="checkbox">
@@ -322,6 +331,9 @@ function showCursorModeTip() {
     gap: 6px;
     label {
       gap: 2px;
+    }
+    input {
+      width: 60px;
     }
   }
 }
