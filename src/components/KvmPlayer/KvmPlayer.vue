@@ -377,6 +377,9 @@ function enterInputMode() {
   }
   kvmInputRef.value.autoEnable(absMouseRef.value, rootRef.value)
 }
+function clearSerialConnection() {
+  kvmInputRef.value?.clearSerial()
+}
 
 const isFolded = useStorage('wmd__actions_is_folded', false)
 
@@ -653,7 +656,7 @@ const isActionBarVisible = computed(() => {
 
     <div v-if="settingsStore.filterShowFg" class="video-fg-layer" />
 
-    <SettingsPrompt v-model:visible="showSettings" :graph-info="graphInfo" @click.stop />
+    <SettingsPrompt v-model:visible="showSettings" :graph-info="graphInfo" @click.stop @clearSerial="clearSerialConnection" />
   </div>
 </template>
 

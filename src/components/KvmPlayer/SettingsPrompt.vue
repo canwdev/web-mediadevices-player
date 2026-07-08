@@ -3,6 +3,7 @@ import { onKeyStroke, useVModel } from '@vueuse/core'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { useSerialState } from '@/components/KvmPlayer/utils/serial-state'
 import { localeList, localeRef } from '@/i18n'
 import { useSettingsStore } from '@/stores/settings'
 import { getVersion, uniOpenUrl } from '@/utils'
@@ -10,9 +11,10 @@ import { getVersion, uniOpenUrl } from '@/utils'
 const props = withDefaults(defineProps<Props>(), {
   visible: false,
 })
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'clearSerial'])
 const { t: $t } = useI18n()
 const settingsStore = useSettingsStore()
+const { serialPort } = useSerialState()
 interface Props {
   visible: boolean
   graphInfo?: any
@@ -111,10 +113,17 @@ function showCursorModeTip() {
           </label>
 
           <template v-if="settingsStore.enableKvmInput">
-            <label class="cursor-pointer">
+            <label v-if="serialPort" class="cursor-pointer">
               <input v-model="settingsStore.autoConnectKvm" type="checkbox">
               <span>{{ $t('app.auto_connect_kvm') }}</span>
             </label>
+            <button
+              v-if="serialPort"
+              class="themed-button"
+              @click="emit('clearSerial')"
+            >
+              {{ $t('app.clear_serial') }}
+            </button>
             <label>
               <span>{{ $t('app.baud_rate') }}</span>
               <select v-model="settingsStore.baudRate" style="flex: 1" class="themed-input">

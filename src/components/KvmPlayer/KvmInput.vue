@@ -66,6 +66,7 @@ async function initSerial(isAuto = false) {
     let port: SerialPort
     if (isAuto && navigator?.serial?.getPorts) {
       const ports = await navigator.serial.getPorts()
+      console.log('ports', ports)
       if (ports.length > 0) {
         port = ports[0]
       }
@@ -125,6 +126,20 @@ function closeSerial() {
   }
   releaseAbsoluteMouse()
   emit('disconnected')
+}
+// 清除串口连接记录（移除浏览器已授权的端口），再次连接需重新申请权限
+async function clearSerial() {
+  if (serialPort.value) {
+    if (typeof serialPort.value.forget === 'function') {
+      try {
+        await serialPort.value.forget()
+      }
+      catch (error) {
+        console.error(error)
+      }
+    }
+    closeSerial()
+  }
 }
 onBeforeUnmount(() => {
   // closeSerial()
@@ -731,6 +746,7 @@ function autoEnable(el) {
 
 defineExpose({
   autoEnable,
+  clearSerial,
 })
 </script>
 
@@ -740,7 +756,7 @@ defineExpose({
       v-if="!serialPort"
       class="btn-no-style blue"
       :title="$t('app.connect_serial')"
-      @click="initSerial"
+      @click="initSerial()"
     >
       <span class="mdi mdi-connection" />
     </button>
