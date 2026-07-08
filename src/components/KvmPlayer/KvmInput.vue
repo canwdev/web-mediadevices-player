@@ -58,34 +58,37 @@ async function readLoop(reader) {
   }
 }
 
-async function initSerial(isAuto = false) {
+async function initSerial() {
   if (serialPort.value) {
     return
   }
   try {
-    let port: SerialPort
-    if (isAuto && navigator?.serial?.getPorts) {
+    let port: SerialPort | undefined
+    // 智能自动重连：存在已授权（连接记录）的端口则直接使用，否则弹出授权
+    if (navigator?.serial?.getPorts) {
       const ports = await navigator.serial.getPorts()
       console.log('ports', ports)
       if (ports.length > 0) {
         port = ports[0]
       }
-      else {
-        return
+    }
+    if (!port) {
+      if (navigator?.serial?.requestPort) {
+        port = await navigator.serial.requestPort()
+      }
+      else if (navigator?.usb?.requestDevice) {
+        // todo: using polyfill  `Failed to execute 'open' on 'USBDevice': Access denied.`
+        const serialPolyfill = import('web-serial-polyfill')
+        const device = await navigator.usb.requestDevice({ filters: [] })
+        // console.log(device)
+        port = new (await serialPolyfill).SerialPort(device, {
+          usbControlInterfaceClass: 255,
+          usbTransferInterfaceClass: 255,
+        }) as SerialPort
       }
     }
-    else if (navigator?.serial?.requestPort) {
-      port = await navigator.serial.requestPort()
-    }
-    else if (navigator?.usb?.requestDevice) {
-      // todo: using polyfill  `Failed to execute 'open' on 'USBDevice': Access denied.`
-      const serialPolyfill = import('web-serial-polyfill')
-      const device = await navigator.usb.requestDevice({ filters: [] })
-      // console.log(device)
-      port = new (await serialPolyfill).SerialPort(device, {
-        usbControlInterfaceClass: 255,
-        usbTransferInterfaceClass: 255,
-      })
+    if (!port) {
+      return
     }
     const baudRate = settingsStore.baudRate || (await createPrompt('9600', 'baud rate')) || '9600'
     settingsStore.baudRate = baudRate
@@ -132,6 +135,7 @@ async function clearSerial() {
   if (serialPort.value) {
     if (typeof serialPort.value.forget === 'function') {
       try {
+        console.log('forget')
         await serialPort.value.forget()
       }
       catch (error) {
@@ -143,13 +147,11 @@ async function clearSerial() {
 }
 onBeforeUnmount(() => {
   // closeSerial()
-  // closeSerial()
-  // closeSerial()
 })
 
 onMounted(async () => {
-  if (settingsStore.enableKvmInput && settingsStore.autoConnectKvm) {
-    initSerial(true)
+  if (settingsStore.enableKvmInput) {
+    initSerial()
   }
 })
 

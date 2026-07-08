@@ -11,7 +11,6 @@ interface ISettings {
   fitMode: string
   floatUI: boolean
   enableKvmInput: boolean
-  autoConnectKvm: boolean
   baudRate: string
   // 鼠标定位模式，建议在Linux客户机下启用相对模式
   cursorMode: 'relative' | 'absolute'
@@ -38,7 +37,6 @@ export const useSettingsStore = defineStore('settingsStore', {
       fitMode: 'contain',
       floatUI: true,
       enableKvmInput: false,
-      autoConnectKvm: true,
       baudRate: '9600',
       cursorMode: 'absolute',
       unlockMouseMode: 'ctrl_alt',

@@ -113,13 +113,10 @@ function showCursorModeTip() {
           </label>
 
           <template v-if="settingsStore.enableKvmInput">
-            <label v-if="serialPort" class="cursor-pointer">
-              <input v-model="settingsStore.autoConnectKvm" type="checkbox">
-              <span>{{ $t('app.auto_connect_kvm') }}</span>
-            </label>
             <button
               v-if="serialPort"
               class="themed-button"
+              :title="$t('app.clear_serial')"
               @click="emit('clearSerial')"
             >
               {{ $t('app.clear_serial') }}
