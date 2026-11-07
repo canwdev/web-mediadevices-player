@@ -5,6 +5,7 @@
 - 网页版：https://canwdev.github.io/web-mediadevices-player/
 - Tauri 打包的客户端：[Releases](https://github.com/canwdev/web-mediadevices-player/releases)
 - [English Readme](./README-en.md)
+- [CH340 串口驱动:[ZGC_CH340G_USB](https://github.com/canwdev/web-mediadevices-player/releases/download/v1.2.1/ZGC_CH340G_USB.zip)
 
 主要用途：
 
